@@ -1,6 +1,14 @@
 var janko = function(client,channel,from,line){
     console.log(line);
-    var ret = "Hei " + from + "! HAISTA VITTU!";
+
+    var ret;
+
+    if(line.contains("SimoBot")
+        && (line.contains("haista vittu") || line.contains("HAISTA VITTU"))){
+        ret = "Asia kunnossa.";
+    } else {
+        ret = "Hei " + from + "! HAISTA VITTU!";
+    }
     client.say(channel,ret);
 }
 
