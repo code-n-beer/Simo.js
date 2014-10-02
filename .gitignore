@@ -1,2 +1,4 @@
 settings.cfg
 node_modules/
+.idea/
+.idea/*
