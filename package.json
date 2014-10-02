@@ -4,6 +4,7 @@
   "author": "Tsarpf <tsarpf@gmail.com>",
   "dependencies": {
     "irc": "*",
-    "line-reader": "*"
+    "line-reader": "*",
+    "request": "*"
   }
 }
