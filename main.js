@@ -93,7 +93,12 @@ function main() {
         {
             if(msg.indexOf(command) === 0)
             {
-                commands[command](client, to, from, message);
+                try{
+                    commands[command](client, to, from, message);
+                }
+                catch(err){
+                    client.say(to, "Command '" + command + "' crashed: " + err);
+                }
             }
         }
     });
