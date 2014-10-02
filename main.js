@@ -79,16 +79,16 @@ function main() {
         console.log("to: " + to);
         console.log("message: " + message);
         var msg = message.toLowerCase();
-        if(msg.indexOf("penis") >= 0)
+        if(msg.indexOf("penis") != -1)
         {
-            client.say('#tkt-cocknballs', ":D");
+            client.say(to, ":D");
         }
 
         for(var command in commands)
         {
             if(msg.indexOf(command) === 0)
             {
-                commands[command](client, to, message);
+                commands[command](client, to, from, message);
             }
         }
     });

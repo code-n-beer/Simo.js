@@ -1,7 +1,7 @@
 
 
 var count = 0;
-var hello = function(client, channel, line){
+var hello = function(client, channel, from, line){
     console.log(line);
     count++;
     var ret =  "Feature has been ran " + count + " times.";
