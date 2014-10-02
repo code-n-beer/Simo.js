@@ -84,6 +84,11 @@ function main() {
             client.say(to, ":D");
         }
 
+        //In case of a query, send the msg to the querier instead of ourselves
+        if(to.indexOf("#") === -1) {
+            to = from;
+        }
+
         for(var command in commands)
         {
             if(msg.indexOf(command) === 0)

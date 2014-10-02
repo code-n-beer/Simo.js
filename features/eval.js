@@ -8,7 +8,9 @@ var main = function(client, channel, from, line) {
 
 module.exports = {
     name: "eval",
+    /*
     commands: { 
        "!eval": main,
     }
+    */
 }
