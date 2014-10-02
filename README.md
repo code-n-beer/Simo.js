@@ -5,6 +5,6 @@ Simo goes javascript
 
 
 
-- See features example.js
+- See features/example.js
 
 - create a settings.cfg
