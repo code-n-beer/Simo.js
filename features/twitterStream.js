@@ -2,7 +2,7 @@ var Stream = require('user-stream');
 
 var fs = require('fs');
 var settings = fs.readFileSync('./settings.json');
-    settings = JSON.parse(settings);
+settings = JSON.parse(settings);
 
 var stream = new Stream({
     consumer_key: settings.twitter.consumer_key,
@@ -20,7 +20,7 @@ var twitter = function(client, channel, from, line){
         streamActive = false;
         return;
     }
-        
+
     if(streamActive) {
         client.say(channel, "Twitter stream is already open");
         return;
@@ -29,23 +29,26 @@ var twitter = function(client, channel, from, line){
     stream.stream();
 
     client.say(channel, "Opened twitter stream")
-    streamActive = true;
+        streamActive = true;
     stream.on('data', function(json) {
         try {
-            var user = json.user.name;
-            var tweet = json.text;
-            client.say(channel, "Tweet from " + user + ": " + tweet);
+            // Don't read own tweets!
+            if(json.user.id != 1220480214){
+                var user = json.user.name;
+                var tweet = json.text;
+                client.say(channel, "Tweet from " + user + ": " + tweet);
+            }
         }
         catch (err) {
             console.log("Twitterstream: Not a tweet");
         }
     });
-    
+
     stream.on('close', function() {
         client.say(channel, "Twitter stream closed");
         streamActive = false;
     });
-    
+
     stream.on('error', function() {
         client.say(channel, "Twitter stream error!");
         streamActive = false;
@@ -55,6 +58,6 @@ var twitter = function(client, channel, from, line){
 module.exports = {
     name: "test", //not required atm iirc 
     commands: { 
-       "!twitter": twitter,
+        "!twitter": twitter,
     }
 }
