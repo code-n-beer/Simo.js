@@ -6,6 +6,7 @@
     "irc": "*",
     "line-reader": "*",
     "request": "*",
-    "user-stream" : "*"
+    "user-stream" : "*",
+    "usage" : "*"
   }
 }
