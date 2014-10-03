@@ -1,22 +1,21 @@
 var janko = function(client,channel,from,line){
     console.log(line);
 
+    var nick = line.split(" ")[1];
     var ret;
 
-    if(line.contains("SimoBot")
-        && (line.contains("haista vittu") || line.contains("HAISTA VITTU"))){
-        ret = "Asia kunnossa.";
+    if(nick){
+        ret = "Hei " + nick + "! HAISTA PASKA!";
     } else {
-        ret = "Hei " + from + "! HAISTA VITTU!";
+        ret = "Hei " + from + "! HAISTA PASKA!";
     }
+
     client.say(channel,ret);
 }
 
 module.exports = {
-    name: "janko",
+    name: "jankko",
     commands: {
-        "!janko": janko
+        "!jankko": janko
     }
 }
-
-// uli
