@@ -36,7 +36,7 @@ var twitter = function(client, channel, from, line){
             if(json.user.id != 1220480214){
                 var user = json.user.screen_name;
                 var tweet = json.text;
-                client.say(channel, "Tweet from " + user + ": " + tweet);
+                client.say(channel, "Tweet from @" + user + ": " + tweet);
             }
         }
         catch (err) {
