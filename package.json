@@ -5,6 +5,8 @@
   "dependencies": {
     "irc": "*",
     "line-reader": "*",
-    "request": "*"
+    "request": "*",
+    "user-stream" : "*",
+    "usage" : "*"
   }
 }

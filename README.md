@@ -11,3 +11,6 @@ Simo goes javascript
 - See features/example.js
 
 - create a settings.json
+
+### Bretty guud irg-server
+https://www.npmjs.org/package/ircdjs
