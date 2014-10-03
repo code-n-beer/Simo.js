@@ -10,4 +10,4 @@ Simo goes javascript
 
 - See features/example.js
 
-- create a settings.cfg
+- create a settings.json
