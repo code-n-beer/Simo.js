@@ -15,7 +15,7 @@ var streamActive = false;
 
 var twitter = function(client, channel, from, line){
     var msg = line.split(" ")[1];
-    if(msg == "stop" && streamActive) {
+    if(msg == "stop") {
         stream.destroy();
         streamActive = false;
         return;
