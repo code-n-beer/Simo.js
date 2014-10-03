@@ -24,7 +24,7 @@ var config = {
 var client = new irc.Client(config.server, config.botnick, {
     channels: [config.channel],
     port: config.port,
-    autoConnect: false
+    autoConnect: false,
     password: config.password,
     userName: config.username
 });
