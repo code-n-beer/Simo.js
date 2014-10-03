@@ -1,0 +1,18 @@
+{
+    "general":
+    {    
+        "server": "localhost",
+        "channel": "#channel",
+        "botnick": "BotName",
+        "username": "name",
+        "password": "hunter2",
+        "port": 0
+    },
+    "twitter":
+    {
+        "consumer_key": "",
+        "consumer_secret": "",
+        "access_token_key": "",
+        "access_token_secret": ""
+    }
+}
