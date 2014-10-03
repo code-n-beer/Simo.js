@@ -45,7 +45,7 @@ client.addListener('message', function(from, to, message) {
     if (message[0] === '!') {
 
       var wanhat = ["!expl", "!horos", "!lastfm", "!mötö", "!unmötö", "!niksi",
-      "!r", "!uc", "!weather", "!uguu"];
+      "!r", "!uc", "!weather", "!uguu", "!add", "!remove", "!c", "!pizza", "!tweet"];
 
       var cmd = message.split(" ")[0];
       if (commands[cmd] !== undefined || wanhat.indexOf(cmd) !== -1) {
