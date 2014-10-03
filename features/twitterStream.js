@@ -58,6 +58,7 @@ var twitter = function(client, channel, from, line){
         streamActive = true;
     });
 
+    // If not closed on purpose, reopen stream
     stream.on('close', function() {
         if(streamActive){
             client.say(channel, "Twitter stream closed, trying to reopen");

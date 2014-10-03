@@ -8,8 +8,8 @@ var commands = features.commands;
 var settings = fs.readFileSync('./settings.json');
 settings = JSON.parse(settings);
 
-//var Firebase = require("firebase");
-//var simoOnFire = new Firebase("https://simocmds.firebaseio.com");
+var Firebase = require("firebase");
+var simoOnFire = new Firebase("https://simocmds.firebaseio.com");
 
 var server,channel,nick,username,password,port;
 var config = {
@@ -39,10 +39,10 @@ client.addListener('error', function(message) {
 
 
 client.addListener('message', function(from, to, message) {
-    console.log("from: " + from);
-    console.log("to: " + to);
-    console.log("message: " + message);
-/*    if (message[0] === '!') {
+    //console.log("from: " + from);
+    //console.log("to: " + to);
+    //console.log("message: " + message);
+    if (message[0] === '!') {
 
       var wanhat = ["!expl", "!horos", "!lastfm", "!mötö", "!unmötö", "!niksi",
       "!r", "!uc", "!weather", "!uguu", "!add", "!remove", "!c", "!pizza", "!tweet"];
@@ -75,7 +75,7 @@ client.addListener('message', function(from, to, message) {
           updateEntryInFirebase(cmd);
         }
       }
-    } */
+    } 
 
     var msg = message.toLowerCase();
     if(msg.indexOf("penis") != -1)
