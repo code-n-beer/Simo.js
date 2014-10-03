@@ -56,7 +56,7 @@ var twitter = function(client, channel, from, line){
 }
 
 module.exports = {
-    name: "test", //not required atm iirc 
+    name: "twitter", //not required atm iirc 
     commands: { 
         "!twitter": twitter,
     }
