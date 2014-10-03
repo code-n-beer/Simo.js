@@ -1,14 +1,15 @@
 var janko = function(client,channel,from,line){
     console.log(line);
 
+    var nick = line.split(" ")[1];
     var ret;
 
-    if(line.contains("SimoBot")
-        && (line.contains("haista vittu") || line.contains("HAISTA VITTU"))){
-        ret = "Asia kunnossa.";
+    if(nick){
+        ret = "Hei " + nick + "! HAISTA VITTU!";
     } else {
         ret = "Hei " + from + "! HAISTA VITTU!";
     }
+
     client.say(channel,ret);
 }
 
@@ -18,5 +19,3 @@ module.exports = {
         "!janko": janko
     }
 }
-
-// uli
