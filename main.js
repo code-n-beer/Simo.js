@@ -27,7 +27,7 @@ var client = new irc.Client(config.server, config.botnick, {
 });
 
 client.addListener('raw', function(message) {
-    console.log(message);
+    //console.log(message);
 });
 
 client.addListener('error', function(message) {
@@ -36,9 +36,9 @@ client.addListener('error', function(message) {
 
 
 client.addListener('message', function(from, to, message) {
-    console.log("from: " + from);
-    console.log("to: " + to);
-    console.log("message: " + message);
+    //console.log("from: " + from);
+    //console.log("to: " + to);
+    //console.log("message: " + message);
     var msg = message.toLowerCase();
     if(msg.indexOf("penis") != -1)
 {

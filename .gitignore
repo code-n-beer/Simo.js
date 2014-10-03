@@ -1,4 +1,5 @@
 settings.json
+settings.cfg
 node_modules/
 .idea/
 .idea/*
