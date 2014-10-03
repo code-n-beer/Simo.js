@@ -64,21 +64,4 @@ for(var command in commands)
 }
 });
 
-<<<<<<< HEAD
 client.connect();
-=======
-        for(var command in commands)
-        {
-            if(msg.indexOf(command) === 0)
-            {
-                try{
-                    commands[command](client, to, from, message);
-                }
-                catch(err){
-                    client.say(to, "Command '" + command + "' crashed: " + err);
-                }
-            }
-        }
-    });
->>>>>>> 1510d742c96622aa191e26da3b1a0a7c95577c55
-
