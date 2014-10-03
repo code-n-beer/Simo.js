@@ -5,17 +5,17 @@ var janko = function(client,channel,from,line){
     var ret;
 
     if(nick){
-        ret = "Hei " + nick + "! HAISTA VITTU!";
+        ret = "Hei " + nick + "! HAISTA PASKA!";
     } else {
-        ret = "Hei " + from + "! HAISTA VITTU!";
+        ret = "Hei " + from + "! HAISTA PASKA!";
     }
 
     client.say(channel,ret);
 }
 
 module.exports = {
-    name: "janko",
+    name: "jankko",
     commands: {
-        "!janko": janko
+        "!jankko": janko
     }
 }
