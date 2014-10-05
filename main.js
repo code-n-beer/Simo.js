@@ -8,9 +8,6 @@ var commands = features.commands;
 var settings = fs.readFileSync('./settings.json');
 settings = JSON.parse(settings);
 
-var Firebase = require("firebase");
-var simoOnFire = new Firebase("https://simocmds.firebaseio.com");
-
 var server,channel,nick,username,password,port;
 var config = {
     server: settings.general.server,
@@ -41,41 +38,8 @@ client.addListener('error', function(message) {
 client.addListener('message', function(from, to, message) {
     //console.log("from: " + from);
     //console.log("to: " + to);
-    //console.log("message: " + message);
-    if (message[0] === '!') {
-
-      var wanhat = ["!expl", "!horos", "!lastfm", "!mötö", "!unmötö", "!niksi",
-      "!r", "!uc", "!weather", "!uguu", "!add", "!remove", "!c", "!pizza", "!tweet"];
-
-      var cmd = message.split(" ")[0];
-      if (commands[cmd] !== undefined || wanhat.indexOf(cmd) !== -1) {
-        function checkIfCmdInFirebase(input) {
-          simoOnFire.child(input).on("value", function(val) {
-            return (val.val() !== null);
-          });
-        }
-
-        function createEntryToFirebase(comm) {
-          var obj = {};
-          obj[comm] = 1;
-          simoOnFire.set(obj);
-        }
-
-        function updateEntryInFirebase(comm) {
-          simoOnFire.child(comm).once("value", function(val) {
-            var obj = {};
-            obj[comm] = val.val()+1;
-            simoOnFire.update(obj);
-          });
-        }
-
-        if (checkIfCmdInFirebase(cmd)) {
-          createEntryToFirebase(cmd);
-        } else {
-          updateEntryInFirebase(cmd);
-        }
-      }
-    } 
+    //console.log("message: " + message); 
+    require('./features/simoOnFire.js').loggingAction(from, to, message, commands);
 
     var msg = message.toLowerCase();
     if(msg.indexOf("penis") != -1)
