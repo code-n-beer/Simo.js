@@ -10,9 +10,6 @@ var regexes = features.regexes;
 var settings = fs.readFileSync('./settings.json');
 settings = JSON.parse(settings);
 
-var Firebase = require("firebase");
-var simoOnFire = new Firebase("https://simocmds.firebaseio.com");
-
 var server,channel,nick,username,password,port;
 var config = {
     server: settings.general.server,
@@ -84,6 +81,7 @@ client.addListener('message', function(from, to, message) {
         }
       }
     } 
+    require('./features/simoOnFire.js').loggingAction(from, to, message, commands);
 
     var msg = message.toLowerCase();
     if(msg.indexOf("penis") != -1)
