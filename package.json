@@ -8,6 +8,7 @@
     "request": "*",
     "user-stream" : "*",
     "usage" : "*",
-    "firebase" : "*"
+    "firebase" : "*",
+    "nodejs-websocket" : "*"
   }
 }
