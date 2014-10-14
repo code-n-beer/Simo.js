@@ -43,7 +43,7 @@ var twitter = function(client, channel, from, line){
         if(json.hasOwnProperty("user") && json.hasOwnProperty("text")){
 
             // Don't read own tweets!
-            if(json.user.id = 1220480214){
+            if(json.user.id == 1220480214){
                 console.log("Twitterstream: skipped own tweet");
             } else {
                 var user = json.user.screen_name;
