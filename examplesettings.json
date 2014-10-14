@@ -14,5 +14,12 @@
         "consumer_secret": "",
         "access_token_key": "",
         "access_token_secret": ""
+    },
+    "translator":
+    {
+      "grant_type": "",
+      "client_id": "",
+      "client_secret": "",
+      "scope": ""
     }
 }

@@ -9,6 +9,8 @@
     "user-stream" : "*",
     "usage" : "*",
     "firebase" : "*",
-    "nodejs-websocket" : "*"
+    "nodejs-websocket" : "*",
+    "underscore" : "*",
+    "xml2js" : "*"
   }
 }
