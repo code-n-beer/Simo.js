@@ -43,20 +43,20 @@ var twitter = function(client, channel, from, line){
         if(json.hasOwnProperty("user") && json.hasOwnProperty("text")){
 
             // Don't read own tweets!
-            if(json.user.id != 1220480214){
+            if(json.user.id = 1220480214){
+                console.log("Twitterstream: skipped own tweet");
+            } else {
                 var user = json.user.screen_name;
 
                 // Retweets are often truncated, if so, get not truncated tweet
                 if(json.hasOwnProperty("retweeted_status")){
                     var tweet = "@" + user + " retweeted @" +
-                                json.retweeted_status.user.screen_name +
-                                ": " + json.retweeted_status.text;
+                    json.retweeted_status.user.screen_name +
+                    ": " + json.retweeted_status.text;
                 } else {
                     var tweet = "Tweet from @" + user + ": " + json.text;
                 }
                 client.say(channel, tweet);
-            } else {
-                console.log("Twitterstream: skipped own tweet");
             }
         } else {
             console.log("Twitterstream: " + Object.keys(json)[0]);
