@@ -42,6 +42,7 @@ for(var init in inits)
     inits[init](config);
 }
 
+var logger = require('./features/simoOnFire.js').loggingAction;
 
 client.addListener('message', function(from, to, message) {
     //console.log("from: " + from);
@@ -60,28 +61,35 @@ client.addListener('message', function(from, to, message) {
         to = from;
     }
 
-    var cmd = msg.split(" ")[0];
-    if(commands.hasOwnProperty(cmd))
-    {
-        var functions = commands[cmd];
-        //console.log("functions: " + functions);
-        functions.forEach(function(func) {
-            func(client, to, from, message);
+    try {
+        var cmd = msg.split(" ")[0];
+        if(commands.hasOwnProperty(cmd))
+        {
+            var functions = commands[cmd];
+            //console.log("functions: " + functions);
+            functions.forEach(function(func) {
+                func(client, to, from, message);
+            });
+        }
+        }
+    catch (err) {
+        console.log(err);
+    }
+    try {
+        Object.keys(regexes).forEach(function(key) {
+                var regex = new RegExp(key);
+                if(message.match(regex))
+                {
+                    for(var i = 0; i < regexes[key].length; i++)
+                    {
+                        regexes[key][i](client, to, from, message);
+                    }
+                }
         });
     }
-    Object.keys(regexes).forEach(function(key) {
-        //Object.keys(regexes[obj]).forEach(function (key) {
-            var regex = new RegExp(key);
-            //if(regex.indexOf(message) !== -1)
-            if(message.match(regex))
-            {
-                for(var i = 0; i < regexes[key].length; i++)
-                {
-                    regexes[key][i](client, to, from, message);
-                }
-            }
-        //});
-    });
+    catch(err){
+        console.log(err);
+    }
 });
 
 client.connect();
