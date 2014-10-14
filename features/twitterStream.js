@@ -84,8 +84,7 @@ var twitter = function(client, channel, from, line){
 
     stream.on('error', function() {
         if(streamActive){
-            client.say(channel, "Twitter stream , tryinr to reopen");
-            r
+            client.say(channel, "Twitter stream error, trying to reopen");
             streamActive = false;
             stream.destroy();
             setTimeout(twitter(client, channel, from, line), 2000);
