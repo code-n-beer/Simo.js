@@ -1,60 +1,64 @@
+var util = require('util');
 
 var timer = function(client, channel, from, line){
+    var say = function(msg)
+    {
+        client.say(channel, msg);
+    }
     line = line.toString();
     console.log(channel);
     console.log(from);
     console.log(line);
     var splitd = "";
-    var time = 0;
+    var num;
     try{
         splitd = line.split(" ");
-        time = splitd[1];
+        num = splitd[1];
     }
     catch(err)
     {
         client.say(channel, "Invalid input: " + err);
         return;
     }
-    splitd.splice(0, 2);
+   //splitd.splice(0, 2);
     var msg = line;
     msg += " left by " + from;
-    var num = 0;
-    try {
-        num = parseInt(time);
-    }
-    catch(err){
-        client.say(channel, "Invalid input: " + err); 
-        return;
-    }
     if(num >= 2147483647)
     {
         client.say(channel, "Value too big");
         return;
     }
 
-    num *= 1000;
     console.log("TIME: !!!: " + num);
-    if(typeof num === 'number')
+    if(!isNaN(num))
     {
+        num *= 1000;
         client.say(channel, "Timer set to: " + (num / 1000) + " seconds from now");
-        setTimeout(target, num, msg, client, channel); 
+        setTimeout(say, num, msg, client, channel); 
+        return;
     }
-    /*
-    else if(typeof type === 'string')
+    if(isTime(num))
     {
-        runAtDate(
+        console.log("IS TIME");
+        var now = new Date();
+        num = util.format("%s/%s/%s %s", now.getFullYear(), now.getMonth()+1, now.getDate(), num);
+        console.log(num);
     }
-    */
+    if(isDate(num))
+    {
+        console.log("IS DATE");
+        // take also clock tiem
+        num += (isTime(splitd[2])) ? " " + splitd[2] : "";
+        var date = new Date(num);
+        say("Timer set to: " + date.toString());
+        runAtDate(date, function() { say(msg) });
+    }
     else
     {
         client.say(channel, "Invalid input"); 
     }
 }
 
-var target = function(msg, client, channel)
-{
-    client.say(channel, msg);
-}
 
 var runAtDate = function(date, func){
     var now = (new Date()).getTime();
@@ -64,6 +68,13 @@ var runAtDate = function(date, func){
         setTimeout(function() {runAtDate(date, func);}, 0x7FFFFFFF);
     else
         setTimeout(func, diff);
+}
+
+var isDate = function(str) {
+    return !isNaN(new Date(str).getTime());
+}
+var isTime = function(str) {
+    return str && str.indexOf(":") > 1;
 }
 
 module.exports = {
