@@ -11,6 +11,7 @@
     "firebase" : "*",
     "nodejs-websocket" : "*",
     "underscore" : "*",
-    "xml2js" : "*"
+    "xml2js" : "*",
+    "anagram" : "*"
   }
 }
