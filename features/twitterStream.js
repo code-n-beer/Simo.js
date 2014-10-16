@@ -66,7 +66,7 @@ var twitter = function(client, channel, from, line){
     });
 
     stream.on('connected', function() {
-        client.say(channel, "Twitter stream opened");
+        //client.say(channel, "Twitter stream opened");
         console.log("Twitterstream: Connected");
         streamActive = true;
     });
