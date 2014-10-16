@@ -5,9 +5,10 @@ var ana = function(client, channel, from, line){
     if(text == 'en'){
         dict = 'twl06.js';
         text = line.split(" ")[2];
-    } else if(text.length > 2){
-        dict = 'sanat.js';
     } else {
+        dict = 'sanat.js';
+    } 
+    if(text.length < 3) {
         return;
     }
 
