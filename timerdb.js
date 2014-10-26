@@ -7,16 +7,13 @@ var sqlite3 = require('sqlite3').verbose()
 
 module.exports.TimerDB = TimerDB;
 
-function init(callback) {
-};
-
 function TimerDB() {
   var create_table = "CREATE TABLE IF NOT EXISTS timer \
                     (date INT NOT NULL UNIQUE PRIMARY KEY, \
                     channel VARCHAR(40) NOT NULL, \
                     sender VARCHAR(40) NOT NULL, \
                     message VARCHAR(510) NULL, \
-                    disabled BOOLEAN)";
+                    disabled BOOLEAN DEFAULT 0 NOT NULL)";
 
   db.serialize(function() {
     db.run(create_table);
