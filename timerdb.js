@@ -2,7 +2,8 @@ var sqlite3 = require('sqlite3').verbose()
   , db = new sqlite3.Database('resources/simojs.sqlite')
   , EventEmitter = require('events').EventEmitter
   , _ = require('underscore')
-  , moment = require('moment');
+  , moment = require('moment')
+  , async = require('async');
 
 module.exports.TimerDB = TimerDB;
 
@@ -57,10 +58,33 @@ TimerDB.prototype.schedule = function(date, channel, sender, message, callback) 
   var insert_row = "INSERT INTO timer \
                     (date, channel, sender, message) \
                     VALUES (?, ?, ?, ?)";
-  db.run(insert_row, date, channel, sender, message, function(err) {
-    if(err) 
-      console.log('TimerDB:','error scheduling alert:',err);
-    callback(err);
+  _unique_date(date, function(unique_date) {
+    db.run(insert_row, unique_date, channel, sender, message, function(err) {
+      if(err) 
+        console.log('TimerDB:','error scheduling alert:',err);
+      callback(err);
+    });
+  });
+};
+
+// don't even try to understand
+function _unique_date(date, callback) {
+  var exists = 1;
+  var check_exists = "SELECT EXISTS(SELECT 1 FROM timer WHERE \
+                      date = ?)";
+  async.whilst(function() { return exists },
+    function(callback) {
+    db.get(check_exists, date, function(err, row) {
+      console.log(row);
+      if(_.values(row)[0] == 1) {
+        date += 1;
+      } else {
+        exists = 0;
+      }
+      callback();
+    });
+    }, function() {
+      callback(date);
   });
 };
 
