@@ -13,6 +13,7 @@
     "underscore" : "*",
     "xml2js" : "*",
     "anagram" : "*",
-    "moment" : "*"
+    "moment" : "*",
+    "sqlite3" : "*"
   }
 }
