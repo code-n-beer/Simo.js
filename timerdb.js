@@ -59,7 +59,7 @@ TimerDB.prototype.schedule = function(date, channel, sender, message, callback) 
     db.run(insert_row, unique_date, channel, sender, message, function(err) {
       if(err) 
         console.log('TimerDB:','error scheduling alert:',err);
-      callback(err);
+      callback(err, unique_date);
     });
   });
 };
@@ -72,7 +72,6 @@ function _unique_date(date, callback) {
   async.whilst(function() { return exists },
     function(callback) {
     db.get(check_exists, date, function(err, row) {
-      console.log(row);
       if(_.values(row)[0] == 1) {
         date += 1;
       } else {
