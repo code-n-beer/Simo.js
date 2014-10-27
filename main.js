@@ -10,6 +10,8 @@ var regexes = features.regexes;
 var settings = fs.readFileSync('./settings.json');
 settings = JSON.parse(settings);
 
+var TimerPoller = require('./lib/timerpoller').TimerPoller;
+
 var server,channel,nick,username,password,port;
 var config = {
     server: settings.general.server,
@@ -92,9 +94,12 @@ client.addListener('message', function(from, to, message) {
     }
 });
 
-client.connect();
+client.connect(function() {
+    new TimerPoller(client, 30);
+});
 
 // Start twitter stream on connect
 setTimeout(
     commands['!twitter'][0](client, config.channel, "startup", ""),
     3000);
+// ^ nice.
