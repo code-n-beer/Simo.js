@@ -12,6 +12,8 @@
     "nodejs-websocket" : "*",
     "underscore" : "*",
     "xml2js" : "*",
-    "anagram" : "*"
+    "anagram" : "*",
+    "moment" : "*",
+    "sqlite3" : "*"
   }
 }
