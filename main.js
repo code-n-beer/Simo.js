@@ -1,6 +1,7 @@
 var irc = require('irc');
 
 var fs = require('fs');
+var _  = require('underscore');
 
 var features = require('./features/index.js').enabledFeatures;
 var commands = features.commands;
@@ -63,6 +64,33 @@ client.addListener('message', function(from, to, message) {
 
     try {
         var cmd = msg.split(" ")[0];
+        var msgArr = msg.split(" ");
+        var stack = new Array();
+        var res = _.reduceRight(msgArr, function(a, b) {
+          console.log(a,b);
+          if(b.indexOf('!') == 0) {
+            var vari;
+            client1 = {
+              say: function(chan, msg) {
+                vari = msg;
+                stack.push(msg)
+              }
+            }
+            if(commands.hasOwnProperty(b))
+        {
+          var functions = commands[b];
+          //console.log("functions: " + functions);
+          functions.forEach(function(func) {
+            func(client1, to, from, b + " " + a);
+          });
+        }
+          return vari;
+          }
+          return b + " " + a;
+        }, '');
+        setTimeout(function() { client.say('#simobot', stack.pop()) }, 500);
+        return;
+
         if(commands.hasOwnProperty(cmd))
         {
             var functions = commands[cmd];
