@@ -35,6 +35,11 @@ var timer = function(client, channel, from, line){
     return;
   }
 
+  if(date.unix() < moment().unix()) {
+    say("Timer not set: provided date is in the past");
+    return;
+  }
+
   var message = line + " left by " + from;
   var info_prefix = "Timer set to: ";
 
@@ -47,7 +52,7 @@ var timer = function(client, channel, from, line){
       if(!err) {
         say(info_prefix + moment.unix(date).toString());
       } else {
-        say("Timer not set: fail");
+        say("Timer not set: database failure");
       }
     });
   }
