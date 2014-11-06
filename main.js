@@ -1,10 +1,6 @@
 var irc = require('irc');
 
 var fs = require('fs');
-var _  = require('underscore');
-var async  = require('async');
-var request = require('request');
-var qs = require('querystring');
 
 
 var features = require('./features/index.js').enabledFeatures;
@@ -16,6 +12,7 @@ var settings = fs.readFileSync('./settings.json');
 settings = JSON.parse(settings);
 
 var TimerPoller = require('./lib/timerpoller').TimerPoller;
+var MultiCommand = require('./lib/multicommand').MultiCommand;
 
 var server,channel,nick,username,password,port;
 var config = {
@@ -50,6 +47,7 @@ for(var init in inits)
 }
 
 var logger = require('./features/simoOnFire.js').loggingAction;
+var multicommand = new MultiCommand(commands, 10);
 
 client.addListener('message', function(from, to, message) {
     //console.log("from: " + from);
@@ -69,60 +67,12 @@ client.addListener('message', function(from, to, message) {
     }
 
     try {
-        var cmd = msg.split(" ")[0];
-        var msgArr = msg.split(" ");
-        if(cmd.indexOf('!') !== 0) {
+        if(msg.indexOf('!') !== 0) {
           return;
         }
-        
-        // HANDLE DEM MSGS
-        // (move this to a reasonable place)
-        async.whilst(function() {
-          return msgArr[0].indexOf('!') === 0;
-        }, function(callback) {
-          if(_.last(msgArr).indexOf('!') === -1) {
-            msgArr[msgArr.length - 2] =  _.last(msgArr, 2).join(" ");
-            msgArr = _.initial(msgArr);
-            callback();
-            return;
-          }
-          message = _.last(msgArr);
-          cmd = message.split(" ")[0];
-          var client1 = {
-            say: function(chan, msg) {
-                  msgArr[msgArr.length - 1] = msg;
-                  callback();
-                }
-          }
 
-          // SIMO.JS FEATURES
-          if(commands.hasOwnProperty(cmd))
-          {
-              var functions = commands[cmd];
-              //console.log("functions: " + functions);
-              functions.forEach(function(func) {
-                  func(client1, to, from, message);
-              });
-          } else {
-            // PYTHON SIMO FEATURES
-            var url = "http://localhost:8888";
-            var post_data = qs.stringify({ command: message });
-            request.post({url:url, body:post_data}, function(e, r, body) {
-              if(e) {
-                console.log('main:', e);
-                client1.say(to, 'fail');
-                return;
-              }
-              if(!body) {
-                client1.say(to, '');
-                return;
-              }
-              client1.say(to, body);
-            });
-          }
-        }, function() {
-          client.say('#simobot', msgArr);
-          return;
+        multicommand.exec(to, from, msg, function(result) {
+            client.say(to, result);
         });
 
         }
