@@ -3,6 +3,9 @@ var irc = require('irc');
 var fs = require('fs');
 var _  = require('underscore');
 var async  = require('async');
+var request = require('request');
+var qs = require('querystring');
+
 
 var features = require('./features/index.js').enabledFeatures;
 var commands = features.commands;
@@ -67,8 +70,9 @@ client.addListener('message', function(from, to, message) {
         var cmd = msg.split(" ")[0];
         var msgArr = msg.split(" ");
         
+        // HANDLE DEM MSGS
+        // (move this to a reasonable place)
         async.whilst(function() {
-          console.log(msgArr.length);
           return msgArr[0].indexOf('!') === 0;
         }, function(callback) {
           if(_.last(msgArr).indexOf('!') === -1) {
@@ -85,6 +89,8 @@ client.addListener('message', function(from, to, message) {
                   callback();
                 }
           }
+
+          // SIMO.JS FEATURES
           if(commands.hasOwnProperty(cmd))
           {
               var functions = commands[cmd];
@@ -92,6 +98,22 @@ client.addListener('message', function(from, to, message) {
               functions.forEach(function(func) {
                   func(client1, to, from, message);
               });
+          } else {
+            // PYTHON SIMO FEATURES
+            var url = "http://localhost:8888";
+            var post_data = qs.stringify({ command: message });
+            request.post({url:url, body:post_data}, function(e, r, body) {
+              if(e) {
+                console.log('main:', e);
+                client1.say(to, 'fail');
+                return;
+              }
+              if(!body) {
+                client1.say(to, '');
+                return;
+              }
+              client1.say(to, body);
+            });
           }
         }, function() {
           client.say('#simobot', msgArr);
