@@ -2,6 +2,7 @@ var irc = require('irc');
 
 var fs = require('fs');
 var _  = require('underscore');
+var async  = require('async');
 
 var features = require('./features/index.js').enabledFeatures;
 var commands = features.commands;
@@ -65,40 +66,38 @@ client.addListener('message', function(from, to, message) {
     try {
         var cmd = msg.split(" ")[0];
         var msgArr = msg.split(" ");
-        var stack = new Array();
-        var res = _.reduceRight(msgArr, function(a, b) {
-          console.log(a,b);
-          if(b.indexOf('!') == 0) {
-            var vari;
-            client1 = {
-              say: function(chan, msg) {
-                vari = msg;
-                stack.push(msg)
-              }
-            }
-            if(commands.hasOwnProperty(b))
-        {
-          var functions = commands[b];
-          //console.log("functions: " + functions);
-          functions.forEach(function(func) {
-            func(client1, to, from, b + " " + a);
-          });
-        }
-          return vari;
+        
+        async.whilst(function() {
+          console.log(msgArr.length);
+          return msgArr[0].indexOf('!') === 0;
+        }, function(callback) {
+          if(_.last(msgArr).indexOf('!') === -1) {
+            msgArr[msgArr.length - 2] =  _.last(msgArr, 2).join(" ");
+            msgArr = _.initial(msgArr);
+            callback();
+            return;
           }
-          return b + " " + a;
-        }, '');
-        setTimeout(function() { client.say('#simobot', stack.pop()) }, 500);
-        return;
+          message = _.last(msgArr);
+          cmd = message.split(" ")[0];
+          var client1 = {
+            say: function(chan, msg) {
+                  msgArr[msgArr.length - 1] = msg;
+                  callback();
+                }
+          }
+          if(commands.hasOwnProperty(cmd))
+          {
+              var functions = commands[cmd];
+              //console.log("functions: " + functions);
+              functions.forEach(function(func) {
+                  func(client1, to, from, message);
+              });
+          }
+        }, function() {
+          client.say('#simobot', msgArr);
+          return;
+        });
 
-        if(commands.hasOwnProperty(cmd))
-        {
-            var functions = commands[cmd];
-            //console.log("functions: " + functions);
-            functions.forEach(function(func) {
-                func(client, to, from, message);
-            });
-        }
         }
     catch (err) {
         console.log(err);
