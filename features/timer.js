@@ -1,84 +1,77 @@
-var util = require('util');
+var _         = require('underscore')
+  , moment    = require('moment')
+  , TimerDB   = require('../lib/timerdb').TimerDB
+  , timerdb   = new TimerDB()
+  , date_strs = ['HH:mm','DD.MM','DD.MM HH:mm','DD.MM.YYYY','DD.MM.YYYY HH:mm']
+  , help_str  = "Supported formats: [number]s/m/h, " + date_strs.join(", ");
 
 var timer = function(client, channel, from, line){
-    var say = function(msg)
-    {
-        client.say(channel, msg);
-    }
-    line = line.toString();
-    console.log(channel);
-    console.log(from);
-    console.log(line);
-    var splitd = "";
-    var num;
-    try{
-        splitd = line.split(" ");
-        num = splitd[1];
-    }
-    catch(err)
-    {
-        client.say(channel, "Invalid input: " + err);
-        return;
-    }
-   //splitd.splice(0, 2);
-    var msg = line;
-    msg += " left by " + from;
-    if(num >= 2147483647)
-    {
-        client.say(channel, "Value too big");
-        return;
-    }
+  var say = function(msg) {
+    client.say(channel, msg);
+  }
 
-    console.log("TIME: !!!: " + num);
-    if(!isNaN(num))
-    {
-        num *= 1000;
-        client.say(channel, "Timer set to: " + (num / 1000) + " seconds from now");
-        setTimeout(say, num, msg, client, channel); 
-        return;
-    }
-    if(isTime(num))
-    {
-        console.log("IS TIME");
-        var now = new Date();
-        num = util.format("%s/%s/%s %s", now.getFullYear(), now.getMonth()+1, now.getDate(), num);
-        console.log(num);
-    }
-    if(isDate(num))
-    {
-        console.log("IS DATE");
-        // take also clock tiem
-        num += (isTime(splitd[2])) ? " " + splitd[2] : "";
-        var date = new Date(num);
-        say("Timer set to: " + date.toString());
-        runAtDate(date, function() { say(msg) });
-    }
-    else
-    {
-        client.say(channel, "Invalid input"); 
-    }
+  var line_arr = line.split(" ");
+
+  if(_.size(line_arr) < 2 || line_arr[1] == '') {
+    say(help_str);
+    return;
+  }
+
+  var first_arg = line_arr[1];
+  var date;
+  var moment_delay = moment().add(
+        initial(first_arg),
+        last(first_arg));
+  var moment_date = moment(_.rest(line_arr).join(" "), date_strs);
+
+  if(first_arg.match(/^[0-9]{1,3}[a-zM]$/) &&
+            moment_delay.isValid()) {
+    date = moment_delay;
+  } else if(first_arg.match(/(:|\.)/) && 
+            moment_date.isValid()) {
+    date = moment_date;
+  } else {
+    say(help_str);
+    return;
+  }
+
+  if(date.unix() < moment().unix()) {
+    say("Timer not set: provided date is in the past");
+    return;
+  }
+
+  var message = line + " left by " + from;
+  var info_prefix = "Timer set to: ";
+
+  if(date.unix() <= moment().add(1, "minute").unix()) {
+    say(info_prefix + date.toString());
+    setTimeout(_.partial(say, message),
+        (date.unix() - moment().unix()) * 1000);
+  } else {
+    timerdb.schedule(date.unix(), channel, from, message, function(err, date) {
+      if(!err) {
+        say(info_prefix + moment.unix(date).toString());
+      } else {
+        say("Timer not set: database failure");
+      }
+    });
+  }
+}
+
+function last(str) {
+  return str.slice(-1);
+}
+
+function initial(str) {
+  return str.slice(0, str.length - 1);
 }
 
 
-var runAtDate = function(date, func){
-    var now = (new Date()).getTime();
-    var then = date.getTime();
-    var diff = Math.max((then - now), 0);
-    if (diff > 0x7FFFFFFF) //setTimeout limit is MAX_INT32=(2^31-1)
-        setTimeout(function() {runAtDate(date, func);}, 0x7FFFFFFF);
-    else
-        setTimeout(func, diff);
-}
 
-var isDate = function(str) {
-    return !isNaN(new Date(str).getTime());
-}
-var isTime = function(str) {
-    return str && str.indexOf(":") > 1;
-}
+
 
 module.exports = {
-    name: "test", //not required atm iirc 
+    name: "timer",
     commands: { 
        "!timer": timer,
     }
