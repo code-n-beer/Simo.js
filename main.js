@@ -71,6 +71,9 @@ client.addListener('message', function(from, to, message) {
     try {
         var cmd = msg.split(" ")[0];
         var msgArr = msg.split(" ");
+        if(cmd.indexOf('!') !== 0) {
+          return;
+        }
         
         // HANDLE DEM MSGS
         // (move this to a reasonable place)
