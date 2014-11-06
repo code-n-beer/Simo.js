@@ -40,7 +40,7 @@ var timer = function(client, channel, from, line){
     return;
   }
 
-  var message = line + " left by " + from;
+  var message = line.slice(1) + " left by " + from;
   var info_prefix = "Timer set to: ";
 
   if(date.unix() <= moment().add(1, "minute").unix()) {
