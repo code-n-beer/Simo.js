@@ -56,11 +56,6 @@ client.addListener('message', function(from, to, message) {
     require('./features/simoOnFire.js').loggingAction(from, to, message, commands);
 
     var msg = message.toLowerCase();
-    if(msg.indexOf("penis") != -1)
-    {
-        client.say(to, ":D");
-    }
-
     //In case of a query, send the msg to the querier instead of ourselves
     if(to.indexOf("#") === -1) {
         to = from;
