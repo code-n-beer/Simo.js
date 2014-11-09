@@ -67,7 +67,8 @@ client.addListener('message', function(from, to, message) {
     }
 
     try {
-        if(msg.indexOf('!') !== 0) {
+        if(msg.indexOf('!') !== 0 && msg.indexOf('http') === -1
+           && msg.indexOf('www') === -1) {
           return;
         }
 
