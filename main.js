@@ -67,7 +67,7 @@ client.addListener('message', function(from, to, message) {
           return;
         }
 
-        multicommand.exec(to, from, msg, function(result) {
+        multicommand.exec(to, from, message, function(result) {
             client.say(to, result);
         });
 
