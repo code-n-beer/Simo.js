@@ -47,7 +47,7 @@ for(var init in inits)
 }
 
 var logger = require('./features/simoOnFire.js').loggingAction;
-var multicommand = new MultiCommand(commands, 10);
+var multicommand = new MultiCommand(commands, 100);
 
 client.addListener('message', function(from, to, message) {
     //console.log("from: " + from);
