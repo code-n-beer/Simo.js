@@ -63,6 +63,10 @@ client.addListener('message', function(from, to, message) {
     if(to.indexOf("#") === -1) {
         to = from;
     }
+    // Enough of this shit
+    if(from == config.botnick) {
+        return;
+    }
 
     try {
 
