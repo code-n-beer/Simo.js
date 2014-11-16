@@ -1,6 +1,7 @@
 var irc = require('irc');
 
 var fs = require('fs');
+var _ = require('underscore');
 
 
 var features = require('./features/index.js').enabledFeatures;
@@ -13,6 +14,7 @@ settings = JSON.parse(settings);
 
 var TimerPoller = require('./lib/timerpoller').TimerPoller;
 var MultiCommand = require('./lib/multicommand').MultiCommand;
+var UrlTitle = require('./lib/urltitle').UrlTitle;
 
 var server,channel,nick,username,password,port;
 var config = {
@@ -48,6 +50,7 @@ for(var init in inits)
 
 var logger = require('./features/simoOnFire.js').loggingAction;
 var multicommand = new MultiCommand(commands, 100);
+var urltitle = new UrlTitle();
 
 client.addListener('message', function(from, to, message) {
     //console.log("from: " + from);
@@ -62,8 +65,14 @@ client.addListener('message', function(from, to, message) {
     }
 
     try {
-        if(msg.indexOf('!') !== 0 && msg.indexOf('http') === -1
-           && msg.indexOf('www') === -1) {
+        urltitle.getTitle(message, function(title) {
+          if(!title) {
+            return;
+          }
+          client.say(to, title);
+        });
+
+        if(msg.indexOf('!') !== 0) {
           return;
         }
 
