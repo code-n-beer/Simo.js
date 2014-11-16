@@ -65,15 +65,15 @@ client.addListener('message', function(from, to, message) {
     }
 
     try {
-        urltitle.getTitle(message, function(title) {
-          if(!title) {
-            return;
-          }
-          client.say(to, title);
-        });
 
         if(msg.indexOf('!') !== 0) {
-          return;
+            urltitle.getTitle(message, function(title) {
+                if(!title) {
+                    return;
+                }
+                client.say(to, title);
+            });
+            return;
         }
 
         multicommand.exec(to, from, message, function(result) {
