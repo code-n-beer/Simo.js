@@ -147,10 +147,27 @@ function menu_needs_update(id) {
          });
 }
 
+var restaurantlist = function(client, channel, from, line) {
+  var print_restaurantlist = function() {
+    console.log(restaurantlist);
+    var result = 'Restaurants: ';
+    result += _.pluck(restaurants.content, 'name').join(", ");
+    client.say(channel, result);
+  }
+  if(restaurants.updated_on < moment().subtract(1, 'week').unix()) {
+    update_restaurants(print_restaurantlist);
+  } else {
+    print_restaurantlist();
+  }
+}
+
 module.exports = {
     name: "unicafe", //not required atm iirc 
     commands: { 
        "!unicafe": unicafe,
+       "!unicafes": restaurantlist,
+       "!restaurantlist": restaurantlist,
+       "!ucs": restaurantlist,
        "!uc": unicafe,
     }
 }
