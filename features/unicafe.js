@@ -77,6 +77,7 @@ var update_menus = function(names, callback) {
           return;
         }
         result.id = id;
+        result.name = name;
         menus = _.reject(menus, function(menu) { return menu.id == id });
         menus.push(result);
         cb();
@@ -92,10 +93,7 @@ var update_menus = function(names, callback) {
 var get_menus = function(names, callback) {
   var result = new Array();
   async.each(names, function(name, cb) {
-    var id = _.find(restaurants.content,
-      function(restaurant) { return restaurant.name == name }).id;
-    var week_menu = _.find(menus, function(menu) { return menu.id == id });
-    // POIS
+    var week_menu = _.find(menus, function(menu) { return menu.name == name });
     if(!week_menu) {
       return;
     }
@@ -149,7 +147,6 @@ function menu_needs_update(id) {
 
 var restaurantlist = function(client, channel, from, line) {
   var print_restaurantlist = function() {
-    console.log(restaurantlist);
     var result = 'Restaurants: ';
     result += _.pluck(restaurants.content, 'name').join(", ");
     client.say(channel, result);
