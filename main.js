@@ -69,6 +69,23 @@ client.addListener('message', function(from, to, message) {
     }
 
     try {
+        Object.keys(regexes).forEach(function(key) {
+                var regex = new RegExp(key);
+                console.log('regex: ' + key);
+                if(message.match(regex))
+                {
+                    for(var i = 0; i < regexes[key].length; i++)
+                    {
+                        regexes[key][i](client, to, from, message);
+                    }
+                }
+        });
+    }
+
+    catch(err){
+        console.log(err);
+    }
+    try {
 
         if(msg.indexOf('!') !== 0) {
             urltitle.getTitle(message, function(title) {
@@ -77,7 +94,7 @@ client.addListener('message', function(from, to, message) {
                 }
                 client.say(to, title);
             });
-            return;
+            return; //this broke regexes btw
         }
 
         multicommand.exec(to, from, message, function(result) {
@@ -88,21 +105,6 @@ client.addListener('message', function(from, to, message) {
 
         }
     catch (err) {
-        console.log(err);
-    }
-    try {
-        Object.keys(regexes).forEach(function(key) {
-                var regex = new RegExp(key);
-                if(message.match(regex))
-                {
-                    for(var i = 0; i < regexes[key].length; i++)
-                    {
-                        regexes[key][i](client, to, from, message);
-                    }
-                }
-        });
-    }
-    catch(err){
         console.log(err);
     }
 });
