@@ -71,9 +71,8 @@ client.addListener('message', function(from, to, message) {
     try {
         Object.keys(regexes).forEach(function(key) {
                 var regex = new RegExp(key);
-                console.log('regex: ' + key);
-                if(message.match(regex))
                 {
+                    console.log('match: ' + regex);
                     for(var i = 0; i < regexes[key].length; i++)
                     {
                         regexes[key][i](client, to, from, message);
