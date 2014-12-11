@@ -16,6 +16,7 @@
     "moment" : "*",
     "sqlite3" : "*",
     "string" : "*",
-    "htmlparser2" : "*"
+    "htmlparser2" : "*",
+    "async": "*"
   }
 }
