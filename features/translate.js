@@ -94,7 +94,7 @@ var get_translation = function(say, translate_me) {
     }
     // wtf is this microsoft shit, I just want the fucking translation
     parseXML(body, function(e, result) {
-      if(e || !result.string._) {
+      if(e || !result || !result.string || !result.string._) {
         console.log(module.exports.name, e);
         say('translation failed: invalid response');
         return;
