@@ -140,6 +140,9 @@ function menu_needs_update(id) {
   }
   week_menu = week_menu.data;
   return _.every(week_menu, function(day_menu) {
+           if(!day_menu.date_en) {
+             return false;
+           }
            var menu_date = moment(day_menu.date_en, "DD.MM");
            return !menu_date.startOf('day').isSame(moment().startOf('day'))
          });
