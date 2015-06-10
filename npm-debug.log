@@ -1,0 +1,147 @@
+0 info it worked if it ends with ok
+1 verbose cli [ '/usr/local/bin/node',
+1 verbose cli   '/usr/local/bin/npm',
+1 verbose cli   'install',
+1 verbose cli   '-g',
+1 verbose cli   'npm-install-missing' ]
+2 info using npm@1.4.28
+3 info using node@v0.10.32
+4 verbose cache add [ 'npm-install-missing', null ]
+5 verbose cache add name=undefined spec="npm-install-missing" args=["npm-install-missing",null]
+6 verbose parsed url { protocol: null,
+6 verbose parsed url   slashes: null,
+6 verbose parsed url   auth: null,
+6 verbose parsed url   host: null,
+6 verbose parsed url   port: null,
+6 verbose parsed url   hostname: null,
+6 verbose parsed url   hash: null,
+6 verbose parsed url   search: null,
+6 verbose parsed url   query: null,
+6 verbose parsed url   pathname: 'npm-install-missing',
+6 verbose parsed url   path: 'npm-install-missing',
+6 verbose parsed url   href: 'npm-install-missing' }
+7 silly lockFile ebbfa9c0-npm-install-missing npm-install-missing
+8 verbose lock npm-install-missing /home/simobot/.npm/ebbfa9c0-npm-install-missing.lock
+9 silly lockFile ebbfa9c0-npm-install-missing npm-install-missing
+10 silly lockFile ebbfa9c0-npm-install-missing npm-install-missing
+11 verbose addNamed [ 'npm-install-missing', '' ]
+12 verbose addNamed [ null, '*' ]
+13 silly lockFile 15a09653-npm-install-missing npm-install-missing@
+14 verbose lock npm-install-missing@ /home/simobot/.npm/15a09653-npm-install-missing.lock
+15 silly addNameRange { name: 'npm-install-missing', range: '*', hasData: false }
+16 verbose request where is /npm-install-missing
+17 verbose request registry https://registry.npmjs.org/
+18 verbose request id eaa6614e0065cedf
+19 verbose url raw /npm-install-missing
+20 verbose url resolving [ 'https://registry.npmjs.org/', './npm-install-missing' ]
+21 verbose url resolved https://registry.npmjs.org/npm-install-missing
+22 verbose request where is https://registry.npmjs.org/npm-install-missing
+23 info trying registry request attempt 1 at 16:44:13
+24 http GET https://registry.npmjs.org/npm-install-missing
+25 http 200 https://registry.npmjs.org/npm-install-missing
+26 silly registry.get cb [ 200,
+26 silly registry.get   { date: 'Thu, 11 Dec 2014 14:44:14 GMT',
+26 silly registry.get     server: 'CouchDB/1.5.0 (Erlang OTP/R16B03)',
+26 silly registry.get     etag: '"AZ55WIMRVM3EEWVY10D67AYU1"',
+26 silly registry.get     'content-type': 'application/json',
+26 silly registry.get     'cache-control': 'max-age=60',
+26 silly registry.get     'content-length': '14029',
+26 silly registry.get     'accept-ranges': 'bytes',
+26 silly registry.get     via: '1.1 varnish',
+26 silly registry.get     age: '0',
+26 silly registry.get     'x-served-by': 'cache-lhr6329-LHR',
+26 silly registry.get     'x-cache': 'MISS',
+26 silly registry.get     'x-cache-hits': '0',
+26 silly registry.get     'x-timer': 'S1418309054.038797,VS0,VE301',
+26 silly registry.get     vary: 'Accept',
+26 silly registry.get     'keep-alive': 'timeout=10, max=50',
+26 silly registry.get     connection: 'Keep-Alive' } ]
+27 silly addNameRange number 2 { name: 'npm-install-missing', range: '*', hasData: true }
+28 silly addNameRange versions [ 'npm-install-missing',
+28 silly addNameRange   [ '0.1.0', '0.1.1', '0.1.2', '0.1.3', '0.1.4' ] ]
+29 verbose addNamed [ 'npm-install-missing', '0.1.4' ]
+30 verbose addNamed [ '0.1.4', '0.1.4' ]
+31 silly lockFile bddaf049-npm-install-missing-0-1-4 npm-install-missing@0.1.4
+32 verbose lock npm-install-missing@0.1.4 /home/simobot/.npm/bddaf049-npm-install-missing-0-1-4.lock
+33 silly lockFile a157631d-ng-npm-install-missing-0-1-4-tgz https://registry.npmjs.org/npm-install-missing/-/npm-install-missing-0.1.4.tgz
+34 verbose lock https://registry.npmjs.org/npm-install-missing/-/npm-install-missing-0.1.4.tgz /home/simobot/.npm/a157631d-ng-npm-install-missing-0-1-4-tgz.lock
+35 verbose addRemoteTarball [ 'https://registry.npmjs.org/npm-install-missing/-/npm-install-missing-0.1.4.tgz',
+35 verbose addRemoteTarball   'ca1c635341cef953cb2404e0db777e7c9e7e87a7' ]
+36 info retry fetch attempt 1 at 16:44:14
+37 verbose fetch to= /tmp/npm-6151-RiUq0RAx/registry.npmjs.org/npm-install-missing/-/npm-install-missing-0.1.4.tgz
+38 http GET https://registry.npmjs.org/npm-install-missing/-/npm-install-missing-0.1.4.tgz
+39 http 200 https://registry.npmjs.org/npm-install-missing/-/npm-install-missing-0.1.4.tgz
+40 silly lockFile a157631d-ng-npm-install-missing-0-1-4-tgz https://registry.npmjs.org/npm-install-missing/-/npm-install-missing-0.1.4.tgz
+41 silly lockFile a157631d-ng-npm-install-missing-0-1-4-tgz https://registry.npmjs.org/npm-install-missing/-/npm-install-missing-0.1.4.tgz
+42 silly lockFile bddaf049-npm-install-missing-0-1-4 npm-install-missing@0.1.4
+43 silly lockFile bddaf049-npm-install-missing-0-1-4 npm-install-missing@0.1.4
+44 silly lockFile 15a09653-npm-install-missing npm-install-missing@
+45 silly lockFile 15a09653-npm-install-missing npm-install-missing@
+46 silly resolved [ { name: 'npm-install-missing',
+46 silly resolved     version: '0.1.4',
+46 silly resolved     description: 'This module will attempt to reinstall any missing dependencies.  It can be called via the command line or used programmatically.',
+46 silly resolved     dependencies: { async: '', npm: '>=1.2.10' },
+46 silly resolved     bin: { 'npm-install-missing': './bin/npm-install-missing' },
+46 silly resolved     devDependencies: { mkdirp: '', mocha: '>=1.0.0', 'node-assertthat': '' },
+46 silly resolved     engines: { node: '>= 0.9.x' },
+46 silly resolved     main: 'index.js',
+46 silly resolved     scripts: { test: 'mocha -R spec' },
+46 silly resolved     repository:
+46 silly resolved      { type: 'git',
+46 silly resolved        url: 'https://github.com/AlexCline/npm-install-missing' },
+46 silly resolved     keywords: [ 'npm', 'install', 'missing', 'retry', 'module' ],
+46 silly resolved     preferGlobal: true,
+46 silly resolved     author: { name: 'Alex Cline', email: 'alex.cline@gmail.com' },
+46 silly resolved     license: 'Apache 2.0',
+46 silly resolved     bugs: { url: 'https://github.com/AlexCline/npm-install-missing/issues' },
+46 silly resolved     readme: 'npm-install-missing\n===================\n\nAn NPM module to reinstall missing dependencies.\n\n[![Build Status](https://travis-ci.org/AlexCline/npm-install-missing.png?branch=master)](https://travis-ci.org/AlexCline/npm-install-missing)\n\nI created this module after working on a project where deployments were failing due to missing module dependencies.  An `npm install` would fail to install the required dependencies for an unknown reason and without error.  Since `npm install` succeeds without error, there wasn\'t a way to tell if the dependency installation failed.\n\nWhen running `npm install` for a second time on a project, npm will check the first level of modules to ensure they\'re installed, but not traverse the dependency tree to ensure all sub-module dependencies are installed.  You can run `npm outdated` to check if modules are missing but npm won\'t install them for you.\n\nThis module combines `npm outdated` and `npm install` to install all missing dependencies within the dependency tree.\n\n\nInstallation\n------------\nTo be able to use this tool system-wide to install missing dependencies for all your node projects, install it globally.\n\n    npm install -g npm-install-missing\n\n\nUsage\n-----\nWithin your project directory:\n\n    npm-install-missing\n    \nThe script will check the current project directory for missing dependencies and install them automatically.\n\n\nDependencies\n------------\nThis module depends on the following modules:\n\n* async\n* npm\n\n\nTesting\n-------\nTo install the devDependencies and run the test framework:\n\n    cd npm-install-missing\n    npm install\n    npm test\n\n\nSupport\n-------\nPlease file tickets and issues using [GitHub Issues](https://github.com/AlexCline/npm-install-missing/issues)\n\n\nLicense\n-------\nCopyright 2013 Alex Cline alex.cline@gmail.com\n\nLicensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at\n\n   http://www.apache.org/licenses/LICENSE-2.0\nUnless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.\n',
+46 silly resolved     readmeFilename: 'README.md',
+46 silly resolved     _id: 'npm-install-missing@0.1.4',
+46 silly resolved     dist:
+46 silly resolved      { shasum: 'ca1c635341cef953cb2404e0db777e7c9e7e87a7',
+46 silly resolved        tarball: 'http://registry.npmjs.org/npm-install-missing/-/npm-install-missing-0.1.4.tgz' },
+46 silly resolved     _from: 'npm-install-missing@',
+46 silly resolved     _npmVersion: '1.3.2',
+46 silly resolved     _npmUser: { name: 'alexcline', email: 'alex.cline@gmail.com' },
+46 silly resolved     maintainers: [ [Object] ],
+46 silly resolved     directories: {},
+46 silly resolved     _shasum: 'ca1c635341cef953cb2404e0db777e7c9e7e87a7',
+46 silly resolved     _resolved: 'https://registry.npmjs.org/npm-install-missing/-/npm-install-missing-0.1.4.tgz' } ]
+47 info install npm-install-missing@0.1.4 into /usr/local/lib
+48 info installOne npm-install-missing@0.1.4
+49 verbose lib/node_modules/npm-install-missing unbuild
+50 verbose tar unpack /home/simobot/.npm/npm-install-missing/0.1.4/package.tgz
+51 silly lockFile dd41e70a-node-modules-npm-install-missing tar:///usr/local/lib/node_modules/npm-install-missing
+52 verbose lock tar:///usr/local/lib/node_modules/npm-install-missing /home/simobot/.npm/dd41e70a-node-modules-npm-install-missing.lock
+53 silly lockFile 2069cf93-nstall-missing-0-1-4-package-tgz tar:///home/simobot/.npm/npm-install-missing/0.1.4/package.tgz
+54 verbose lock tar:///home/simobot/.npm/npm-install-missing/0.1.4/package.tgz /home/simobot/.npm/2069cf93-nstall-missing-0-1-4-package-tgz.lock
+55 silly gunzTarPerm modes [ '775', '664' ]
+56 error Error: EACCES, mkdir '/usr/local/lib/node_modules/npm-install-missing'
+56 error  { [Error: EACCES, mkdir '/usr/local/lib/node_modules/npm-install-missing']
+56 error   errno: 3,
+56 error   code: 'EACCES',
+56 error   path: '/usr/local/lib/node_modules/npm-install-missing',
+56 error   fstream_type: 'Directory',
+56 error   fstream_path: '/usr/local/lib/node_modules/npm-install-missing',
+56 error   fstream_class: 'DirWriter',
+56 error   fstream_stack:
+56 error    [ '/usr/local/lib/node_modules/npm/node_modules/fstream/lib/dir-writer.js:36:23',
+56 error      '/usr/local/lib/node_modules/npm/node_modules/mkdirp/index.js:46:53',
+56 error      'Object.oncomplete (fs.js:107:15)' ] }
+57 error Please try running this command again as root/Administrator.
+58 error System Linux 3.13.0-36-generic
+59 error command "/usr/local/bin/node" "/usr/local/bin/npm" "install" "-g" "npm-install-missing"
+60 error cwd /home/simobot/Simo.js
+61 error node -v v0.10.32
+62 error npm -v 1.4.28
+63 error path /usr/local/lib/node_modules/npm-install-missing
+64 error fstream_path /usr/local/lib/node_modules/npm-install-missing
+65 error fstream_type Directory
+66 error fstream_class DirWriter
+67 error code EACCES
+68 error errno 3
+69 error stack Error: EACCES, mkdir '/usr/local/lib/node_modules/npm-install-missing'
+70 error fstream_stack /usr/local/lib/node_modules/npm/node_modules/fstream/lib/dir-writer.js:36:23
+70 error fstream_stack /usr/local/lib/node_modules/npm/node_modules/mkdirp/index.js:46:53
+70 error fstream_stack Object.oncomplete (fs.js:107:15)
+71 verbose exit [ 3, true ]

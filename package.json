@@ -13,6 +13,7 @@
     "nodejs-websocket": "*",
     "request": "*",
     "sandbox": "^0.8.6",
+    "sandcastle": "^1.3.3",
     "sqlite3": "*",
     "string": "*",
     "underscore": "*",
