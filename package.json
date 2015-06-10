@@ -3,20 +3,21 @@
   "description": "SimoBot goes js",
   "author": "Tsarpf <tsarpf@gmail.com>",
   "dependencies": {
+    "anagram": "*",
+    "async": "*",
+    "firebase": "*",
+    "htmlparser2": "*",
     "irc": "*",
     "line-reader": "*",
+    "moment": "*",
+    "nodejs-websocket": "*",
     "request": "*",
-    "user-stream" : "*",
-    "usage" : "*",
-    "firebase" : "*",
-    "nodejs-websocket" : "*",
-    "underscore" : "*",
-    "xml2js" : "*",
-    "anagram" : "*",
-    "moment" : "*",
-    "sqlite3" : "*",
-    "string" : "*",
-    "htmlparser2" : "*",
-    "async": "*"
+    "sandbox": "^0.8.6",
+    "sqlite3": "*",
+    "string": "*",
+    "underscore": "*",
+    "usage": "*",
+    "user-stream": "*",
+    "xml2js": "*"
   }
 }
