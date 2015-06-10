@@ -26,6 +26,11 @@ var run = function(client, channel, from, line){
       res = err.toString();
       client.say(channel, res);
     }
+    sbox.kill();
+  });
+  script.on('timeout', function() {
+    console.log('script timed out');
+    client.say(channel, 'script timed out');
   });
 
   script.run();
