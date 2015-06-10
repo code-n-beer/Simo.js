@@ -3,13 +3,13 @@ var SandCastle = require('sandcastle').SandCastle;
 //channel is needed to send stuff using client, but is also the channel's name where the line came from
 //line is the full message the user sent
 //from is the nick of the user who sent the line
+var sbox = new SandCastle({
+  api: __dirname + '/../lib/api.js',
+    memoryLimitMB: 1000,
+    timeout: 10000
+});
 var run = function(client, channel, from, line){
   //console.log(line); //debug
-  var sbox = new SandCastle({
-    api: __dirname + '/../lib/api.js',
-      memoryLimitMB: 100,
-      timeout: 3000
-  });
 
   line = line.substring(5);
   var script = sbox.createScript("exports.main = function() {" + line + "}");
@@ -19,14 +19,15 @@ var run = function(client, channel, from, line){
     console.log('output: ' + output);
     if(!err) {
       res = JSON.stringify(output);
+      res = res.substring(0,400);
       res = res.replace(/(\r\n|\n|\r)/gm,' ');
+      res = res.toString();
       client.say(channel, res);
     }
     else {
       res = err.toString();
       client.say(channel, res);
     }
-    sbox.kill();
   });
   script.on('timeout', function() {
     console.log('script timed out');
