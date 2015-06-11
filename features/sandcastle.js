@@ -47,7 +47,7 @@ var run = function(client, channel, from, line){
 
 var macros = {};
 var init = function(config) {
-    var macroFile = require(macroPath);
+    var macroFile = fs.readFileSync(macroPath);
     macros = JSON.parse(macroFile);
 }
 
