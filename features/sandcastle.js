@@ -16,7 +16,7 @@ var run = function(client, channel, from, line){
   line = line.substring('!run '.length);
   for(var macro in macros) {
     if(macros.hasOwnProperty(macro)) {
-        line = line.replace(macro, macros[macro]);
+        line = replaceAll(line, macro, macros[macro]);
     }
   }
   var script = sbox.createScript("exports.main = function() {" + line + "}");
@@ -89,6 +89,10 @@ var delMacro = function(client, channel, from, line) {
     writeMacros(function() {
         client.say(channel, 'removed');
     });
+}
+
+var replaceAll = function(string, target, replace) {
+    return string.replace(new RegExp(target, 'g'), replace);
 }
 
 module.exports = {
