@@ -78,7 +78,7 @@ var newMacro = function(client, channel, from, line) {
         else {
             client.say(channel, 'added macro');
         }
-    }
+    });
 }
 
 var delMacro = function(client, channel, from, line) {
