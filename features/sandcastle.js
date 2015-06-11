@@ -95,7 +95,7 @@ module.exports = {
   name: "eval in a sandbox", //not required atm iirc 
   commands: { 
     "!run": run,
-    '!addmacro': newMacro
+    '!addmacro': newMacro,
     '!delmacro': delMacro
   }
 }
