@@ -97,6 +97,7 @@ module.exports = {
     "!run": run,
     '!addmacro': newMacro,
     '!delmacro': delMacro
-  }
+  },
+  init: init
 }
 
