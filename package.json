@@ -6,7 +6,7 @@
     "anagram": "*",
     "async": "*",
     "firebase": "*",
-    "htmlparser2": "*",
+    "cheerio" : "*",
     "irc": "*",
     "line-reader": "*",
     "moment": "*",
