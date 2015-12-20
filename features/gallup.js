@@ -5,7 +5,7 @@ var options = [];
 var answered = []; // list of users who have already answered the gallup (yes, you can circumvent it by changing your nick)
 
 var gallup = function(client, channel, from, line)
-
+{
 	if (onGoing)
     {
         client.say(channel, question, printAnswers());
@@ -15,14 +15,14 @@ var gallup = function(client, channel, from, line)
     onGoing = true;
     var line = line.split('#');
     question = line[0].substring(8);
-    options = line.slice(1).map(function(x) { return [ x : 0 ]; });
+    options = line.slice(1).map(function(x) { return [ x, 0 ]; });
     client.say(channel, "Started gallup " + question + " " + printOptions());
     setTimeout(function() { end(client, channel); }, 60*60*12);
 
 }
 
 var answer = function(client, channel, from, line)
-
+{
     if (!onGoing)
 	{
 		client.say(channel, "No ongoing gallup. Start a new one by saying !gallup #Ass or boobs? #Ass #Boobs #Neither, I like ice cream");
@@ -83,6 +83,23 @@ var end = function(client, channel)
     client.say(channel, "Gallup finished: " + question + " Results: " + printOptions(true));
 	onGoing = false;
     //save results
+}
+
+var printOptions = function(results)
+{
+    var ret = "";
+    if (results) var noOfAnswers = options.reduce(function(x,y) {
+        return x + y[1];
+    });
+    for (var i = 0; i < options.length; i++)
+    {
+        ret += "(" + i + ") " + options[i][0] + " ";
+        if (results)
+        {
+            ret += options[i][1] + " answers (" + options[i][1] / noOfAnswers + "%) ";
+        }
+    }
+    return ret;
 }
 
 module.exports = {
