@@ -27,6 +27,8 @@ var config = {
     websocketport: settings.general.websocketport,
     wpuser: settings.wordpress.username,
     wppass: settings.wordpress.password,
+    mailFileUrl: settings.email.fileUrl,
+    mailFilePath: settings.email.filePath,
 };
 
 var client = new irc.Client(config.server, config.botnick, {

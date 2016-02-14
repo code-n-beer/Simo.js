@@ -48,12 +48,13 @@ server.post('/webhook', function (req, res) {
             handleMail(JSON.parse(fields.mailinMsg));
         }
         catch(err) {
+            console.log(err);
             console.log('mail receive failed');
         }
     });
 });
 
-var path;
+var filepath;
 var client;
 var channel;
 var url;
@@ -65,7 +66,7 @@ function handleMail(mail) {
     obj.subject = mail.subject;
     console.log(obj);
     var filename = makeid() + '.html';
-    var fullPath = path.join(path, filename);
+    var fullPath = path.join(filepath, filename);
     var text = util.format(
         '<html> <head> </head> <body> <h1> %s </h1> <p> From <b> %s </b> To <b> %s </b> </p> <p> %s </p></body> </html>',
         obj.subject, obj.from, obj.to, obj.text
@@ -88,9 +89,10 @@ function makeid()
 
 var init = function(config, cli) {
     url = config.mailFileUrl;
+    filepath = config.mailFilePath;
     channel = config.channel;
     client = cli;
-    path = config.mailPath;
+    console.log(url, channel, path);
     server.listen(54321, function (err) {
         if (err) {
             console.log(err);
