@@ -3,6 +3,7 @@ var express = require('express');
 var fs = require('fs');
 var multiparty = require('multiparty');
 var util = require('util');
+var path = require('path');
 
 
 var mails = [];
@@ -44,7 +45,7 @@ server.post('/webhook', function (req, res) {
 
     form.parse(req, function (err, fields) {
         try {
-        mails.push(parseMail(JSON.parse(fields.mailinMsg)));
+            handleMail(JSON.parse(fields.mailinMsg));
         }
         catch(err) {
             console.log('mail receive failed');
@@ -52,26 +53,44 @@ server.post('/webhook', function (req, res) {
     });
 });
 
-function parseMail(mail) {
+var path;
+var client;
+var channel;
+var url;
+function handleMail(mail) {
     var obj = {};
     obj.text = mail.text;
-    obj.from = mail.from;
-    obj.to = mail.to;
+    obj.from = mail.from[0].address;
+    obj.to = mail.to[0].address;
     obj.subject = mail.subject;
     console.log(obj);
-    return obj;
+    var filename = makeid() + '.html';
+    var fullPath = path.join(path, filename);
+    var text = util.format(
+        '<html> <head> </head> <body> <h1> %s </h1> <p> From <b> %s </b> To <b> %s </b> </p> <p> %s </p></body> </html>',
+        obj.subject, obj.from, obj.to, obj.text
+    );
+    fs.writeFileSync(fullPath, text);
+    var msg = util.format("<From: %s To: %s> %s || %s", obj.from, obj.to, obj.subject, url + filename);
+    client.say(channel, msg);
 }
 
-var getMail = function(client, channel, from, line) {
-    if(mails.length > 0) {
-        var mail = mails.pop();
-        var msg = "<From: " + mail.from[0].address + " To: " + mail.to[0].address + "> " + mail.subject + " // " + mail.text;
-        return client.say(channel, msg);
-    }
-    client.say(channel, 'No new mail');
+function makeid()
+{
+    var text = "";
+    var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+
+    for( var i=0; i < 10; i++ )
+        text += possible.charAt(Math.floor(Math.random() * possible.length));
+
+    return text;
 }
 
-var init = function(config, client) {
+var init = function(config, cli) {
+    url = config.mailFileUrl;
+    channel = config.channel;
+    client = cli;
+    path = config.mailPath;
     server.listen(54321, function (err) {
         if (err) {
             console.log(err);
@@ -79,6 +98,8 @@ var init = function(config, client) {
             console.log('Http server listening on port 54321');
         }
     });
+}
+function getMail() {
 }
 
 module.exports = {
