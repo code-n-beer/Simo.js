@@ -25,6 +25,8 @@ var config = {
     password: settings.general.password,
     port: settings.general.port,
     websocketport: settings.general.websocketport,
+    wpuser: settings.wordpress.username,
+    wppass: settings.wordpress.password,
 };
 
 var client = new irc.Client(config.server, config.botnick, {
@@ -36,7 +38,7 @@ var client = new irc.Client(config.server, config.botnick, {
 });
 
 client.addListener('raw', function(message) {
-    //console.log(message);
+    console.log(message);
 });
 
 client.addListener('error', function(message) {
@@ -45,7 +47,7 @@ client.addListener('error', function(message) {
 
 for(var init in inits)
 {
-    inits[init](config);
+    inits[init](config, client);
 }
 
 var logger = require('./features/simoOnFire.js').loggingAction;

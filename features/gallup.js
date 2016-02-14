@@ -8,16 +8,21 @@ var gallup = function(client, channel, from, line)
 {
 	if (onGoing)
     {
-        client.say(channel, question, printAnswers());
+        client.say(channel, question, printOptions(false));
         return;
     }
-	startedBy = from.replace("_", "");
-    onGoing = true;
+    startedBy = from.replace("_", "");
     var line = line.split('#');
     question = line[0].substring(8);
-    options = line.slice(1).map(function(x) { return [ x, 0 ]; });
-    client.say(channel, "Started gallup " + question + " " + printOptions());
-    setTimeout(function() { end(client, channel); }, 60*60*12);
+    if (line.length < 2 || question.length == "")
+    {
+	client.say(channel, "Question not long enough or not enough options");
+	return;
+    }
+    line.slice(1).map(function(x) { options.push([x.trim(), 0]); }); //convert list of options to array with space for counter of answers
+    onGoing = true;
+    client.say(channel, "Started gallup " + question + " " + printOptions(false));
+    setTimeout(function() { end(client, channel); }, 1000*60*60*12);
 
 }
 
@@ -25,7 +30,7 @@ var answer = function(client, channel, from, line)
 {
     if (!onGoing)
 	{
-		client.say(channel, "No ongoing gallup. Start a new one by saying !gallup #Ass or boobs? #Ass #Boobs #Neither, I like ice cream");
+		client.say(channel, "No ongoing gallup. Start a new one by saying !gallup Ass or boobs? #Ass #Boobs #Neither, I like ice cream");
 		return;
 	}
 	if (answered.indexOf(from.replace("_", "")) != -1)
@@ -33,10 +38,10 @@ var answer = function(client, channel, from, line)
         client.say(channel, "You have already answered this gallup, " + from);
         return;
     }
-	answered.append(from.replace("_", ""));
-    var answer = line.substring(10);
+    var answer = line.substring(8);
     var accepted = false;
-    if (isNan(answer)) //answer is text
+    answer = answer.trim();
+    if (isNaN(answer)) //answer is text
     {
         for (var i = 0; i < options.length; i++)
         {
@@ -52,11 +57,13 @@ var answer = function(client, channel, from, line)
         accepted = true;
         options[answer][1] = options[answer][1] + 1;
     }
+
     if (accepted)
     {
         client.say(channel, "Answer recorded.");
+	answered.push(from.replace("_", ""));
     } else {
-        client.say(channel, "Invalid answer. Question was " + question + " Options are " + printOptions())
+        client.say(channel, "Invalid answer. Question was " + question + " Options are " + printOptions(false))
     }
 
 }
@@ -65,7 +72,7 @@ var endCheck = function(client, channel, from, line)
 {
 	if (!onGoing)
 	{
-		client.say(channel, "No ongoing gallup");
+		client.say(channel, "No ongoing gallup. Start a new one by saying !gallup Ass or boobs? #Ass #Boobs #Neither, I like ice cream");
 		return;
 	} 
 	if (from.replace("_", "") != startedBy) {
@@ -77,10 +84,10 @@ var endCheck = function(client, channel, from, line)
 
 var end = function(client, channel)
 {
+    client.say(channel, "Gallup finished: " + question + " Results: " + printOptions(true));
 	answered = [];
 	options = [];
 	question = "";	
-    client.say(channel, "Gallup finished: " + question + " Results: " + printOptions(true));
 	onGoing = false;
     //save results
 }
@@ -88,16 +95,24 @@ var end = function(client, channel)
 var printOptions = function(results)
 {
     var ret = "";
-    if (results) var noOfAnswers = options.reduce(function(x,y) {
-        return x + y[1];
-    });
+    if (results)
+    {
+	var noOfAnswers = options.reduce(function(x,y) {
+             return x + y[1]; }, 0);
+	if (noOfAnswers == 0) 
+	{
+	     return "No answers.";
+	}
+    }
     for (var i = 0; i < options.length; i++)
     {
-        ret += "(" + i + ") " + options[i][0] + " ";
+	if (!results) ret += "(" + i + ") ";
+        ret += options[i][0] + " ";
         if (results)
         {
-            ret += options[i][1] + " answers (" + options[i][1] / noOfAnswers + "%) ";
+            ret += ": " + options[i][1] + " answer" + options[i][1] == 1 ? "" : "s" + " (" + (parseFloat(options[i][1]) / noOfAnswers) * 100 + "%) ";
         }
+	ret += " | ";
     }
     return ret;
 }

@@ -1,1 +1,2 @@
+authbind --deep mailin --webhook http://localhost/incoming_emails &
 while [ 1 ]; do node main.js; done

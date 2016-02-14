@@ -3,3 +3,5 @@ settings.cfg
 node_modules/
 .idea/
 .idea/*
+resources/simojs.sqlite
+.tmp
