@@ -4,6 +4,12 @@
  *   COPY THIS FILE TO CREATE YOUR OWN FEATURE 
  *   DON'T PUT YOUR FEATURE WITHIN THIS FILE
  */
+
+//when placed in the return object, will be run on simojs startup
+var init = function() {
+	
+}
+
 var count = 0;
 //client is used to send stuff
 //channel is needed to send stuff using client, but is also the channel's name where the line came from
@@ -20,5 +26,6 @@ module.exports = {
     name: "test", //not required atm iirc 
     commands: { 
        "!test": hello,
-    }
+    },
+    init: init
 }
