@@ -1,3 +1,4 @@
+var escape = require('escape-html');
 var async = require('async');
 var express = require('express');
 var fs = require('fs');
@@ -58,12 +59,28 @@ var filepath;
 var client;
 var channel;
 var url;
+var spammers = [
+    'z2007tw@yahoo.com.tw',
+]; 
+
+var receivers = [
+];
+
 function handleMail(mail) {
     var obj = {};
-    obj.text = mail.text;
-    obj.from = mail.from[0].address;
-    obj.to = mail.to[0].address;
-    obj.subject = mail.subject;
+    obj.text = escape(mail.text);
+    obj.from = escape(mail.from[0].address);
+
+    if(spammers.indexOf(mail.from[0].address.trim()) >= 0){
+        return;
+    }
+    obj.to = escape(mail.to[0].address);
+
+    if(obj.to.toLowerCase().indexOf('hypsy.fi') < 0 && obj.to.toLowerCase().indexOf('arkikuos.it') < 0) {
+        return;
+    }
+
+    obj.subject = escape(mail.subject);
     console.log(obj);
     var filename = makeid() + '.html';
     var fullPath = path.join(filepath, filename);

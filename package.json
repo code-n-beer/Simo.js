@@ -6,6 +6,7 @@
     "anagram": "*",
     "async": "*",
     "cheerio": "*",
+    "escape-html": "^1.0.3",
     "express": "^4.13.4",
     "firebase": "*",
     "htmlparser2": "^3.9.0",
