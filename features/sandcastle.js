@@ -1,6 +1,7 @@
 var SandCastle = require('sandcastle').SandCastle;
 var fs = require('fs');
 var macroPath = __dirname + '/../lib/macros.js';
+var concat = require('../lib/concat.js');
 //client is used to send stuff
 //channel is needed to send stuff using client, but is also the channel's name where the line came from
 //line is the full message the user sent
@@ -14,11 +15,14 @@ var run = function(client, channel, from, line){
   //console.log(line); //debug
 
   line = line.substring('!run '.length);
-  for(var macro in macros) {
-    if(macros.hasOwnProperty(macro)) {
-        line = replaceAll(line, macro, macros[macro]);
-    }
-  }
+  var lineArr = line.split(" ");
+  if(macros.hasOwnProperty(lineArr[0])) {
+		line = macros[lineArr[0]];
+		delete lineArr[0];
+  } else {
+		lineArr = []
+	}
+
   var script = sbox.createScript("exports.main = function() {" + line + "}");
 
   script.on('exit', function(err, output) {
@@ -29,7 +33,9 @@ var run = function(client, channel, from, line){
       res = res.substring(0,400);
       res = res.replace(/(\r\n|\n|\r)/gm,' ');
       res = res.toString();
-      client.say(channel, res);
+      res = res.replace(/^"/,'');
+      res = res.replace(/"$/,'');
+      client.say(channel, concat(res, lineArr.join(" ")));
     }
     else {
       res = err.toString();
