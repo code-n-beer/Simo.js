@@ -14,7 +14,15 @@ var sbox = new SandCastle({
 var run = function(client, channel, from, line){
   //console.log(line); //debug
 
+	var args = []
   line = line.substring('!run '.length);
+	if(line.indexOf('_') === 0) {
+		args = line.match(/\((.*)\)/)
+		if(args !== null) {
+			args = args[0].replace(/^\(/, '').replace(/\)$/, '').split(',')
+			line = line.replace(/\((.*)\)/, '')
+		}
+	}
   var lineArr = line.split(" ");
   if(macros.hasOwnProperty(lineArr[0])) {
 		line = macros[lineArr[0]];
@@ -29,7 +37,7 @@ var run = function(client, channel, from, line){
     console.log('err: ' + err);
     console.log('output: ' + output);
     if(!err) {
-      res = JSON.stringify(output);
+     res = JSON.stringify(output);
       res = res.substring(0,400);
       res = res.replace(/(\r\n|\n|\r)/gm,' ');
       res = res.toString();
@@ -47,7 +55,7 @@ var run = function(client, channel, from, line){
     client.say(channel, 'script timed out');
   });
 
-  script.run();
+  script.run({args: args});
 }
 
 
