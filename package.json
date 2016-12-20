@@ -4,11 +4,11 @@
   "author": "Tsarpf <tsarpf@gmail.com>",
   "dependencies": {
     "anagram": "*",
-    "async": "*",
+    "async": "1.4.2",
     "cheerio": "*",
     "escape-html": "^1.0.3",
     "express": "^4.13.4",
-    "firebase": "*",
+    "firebase": "2.3.0",
     "htmlparser2": "^3.9.0",
     "iconv-lite": "^0.4.13",
     "irc": "*",

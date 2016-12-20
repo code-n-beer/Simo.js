@@ -57,7 +57,7 @@ var twitter = function(client, channel, from, line){
                     var tweet = "Tweet from @" + user + ": " + json.text;
                 }
                 // Remove line breaks from tweets
-                tweet = tweet.replace(/(\r\n|\n|\r)/gm," ");
+                tweet = tweet.replace(/(\r\n|\n|\r)/gm," \\ ");
                 client.say(channel, tweet);
             }
         } else {

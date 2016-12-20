@@ -24,9 +24,11 @@ var init = function(config, client) {
         else {
             console.log(stanza);
         }
+    });
+    xmppclient.on('error', function (msg) {
+	    console.log('error: ' + msg);
+	    console.log(msg);
     })
-
-
 }
 
 var count = 0;

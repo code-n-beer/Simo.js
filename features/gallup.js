@@ -1,14 +1,14 @@
-var onGoing = false;
-var startedBy; //nick of user who started the gallup
-var question = "";
-var options = []; 
-var answered = []; // list of users who have already answered the gallup (yes, you can circumvent it by changing your nick)
+var onGoing = false,
+    startedBy, //nick of user who started the gallup
+    question = "",
+    options = [], 
+    answered = []; // list of users who have already answered the gallup (yes, you can circumvent it by changing your nick)
 
 var gallup = function(client, channel, from, line)
 {
 	if (onGoing)
     {
-        client.say(channel, question, printOptions(false));
+        client.say(channel, question + " " + printOptions(false));
         return;
     }
     startedBy = from.replace("_", "");
@@ -16,8 +16,8 @@ var gallup = function(client, channel, from, line)
     question = line[0].substring(8);
     if (line.length < 2 || question.length == "")
     {
-	client.say(channel, "Question not long enough or not enough options");
-	return;
+        client.say(channel, "Question not long enough or not enough options. Start a gallup by saying !gallup Ass or boobs? #Ass #Boobs #Neither, I like ice cream");
+        return;
     }
     line.slice(1).map(function(x) { options.push([x.trim(), 0]); }); //convert list of options to array with space for counter of answers
     onGoing = true;
@@ -106,13 +106,12 @@ var printOptions = function(results)
     }
     for (var i = 0; i < options.length; i++)
     {
-	if (!results) ret += "(" + i + ") ";
+        if (!results) ret += "(" + i + ") ";
         ret += options[i][0] + " ";
         if (results)
         {
             ret += ": " + options[i][1] + " answer" + options[i][1] == 1 ? "" : "s" + " (" + (parseFloat(options[i][1]) / noOfAnswers) * 100 + "%) ";
         }
-	ret += " | ";
     }
     return ret;
 }
