@@ -14,22 +14,14 @@ var sbox = new SandCastle({
 var run = function(client, channel, from, line){
   //console.log(line); //debug
 
-	var args = []
   line = line.substring('!run '.length);
-	if(line.indexOf('_') === 0) {
-		args = line.match(/\((.*)\)/)
-		if(args !== null) {
-			args = args[0].replace(/^\(/, '').replace(/\)$/, '').split(',')
-			line = line.replace(/\((.*)\)/, '')
-		}
-	}
   var lineArr = line.split(" ");
   if(macros.hasOwnProperty(lineArr[0])) {
-		line = macros[lineArr[0]];
-		delete lineArr[0];
+    line = macros[lineArr[0]];
+    delete lineArr[0];
   } else {
-		lineArr = []
-	}
+    lineArr = []
+  }
 
   var script = sbox.createScript("exports.main = function() {" + line + "}");
 
@@ -55,7 +47,7 @@ var run = function(client, channel, from, line){
     client.say(channel, 'script timed out');
   });
 
-  script.run({args: args});
+  script.run({arg: lineArr.join(" ")});
 }
 
 
@@ -104,6 +96,12 @@ var delMacro = function(client, channel, from, line) {
         client.say(channel, 'removed');
     });
 }
+var printMacro = function(client, channel, from, line) {
+    line = line.substring('!printmacro '.length);
+    var words = line.split(' ');
+    var name = words[0];
+    client.say(channel, macros[name])
+}
 
 var replaceAll = function(string, target, replace) {
     return string.replace(new RegExp(target, 'g'), replace);
@@ -114,7 +112,8 @@ module.exports = {
   commands: { 
     "!run": run,
     '!addmacro': newMacro,
-    '!delmacro': delMacro
+    '!delmacro': delMacro,
+    '!printmacro': printMacro
   },
   init: init
 }
