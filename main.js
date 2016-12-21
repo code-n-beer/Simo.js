@@ -117,6 +117,6 @@ client.connect(function() {
 
 // Start twitter stream on connect
 setTimeout(
-    commands['!twitter'][0](client, config.channel, "startup", ""),
+    () => commands['!twitter'][0](client, config.channel, "startup", ""),
     3000);
 // ^ nice.
