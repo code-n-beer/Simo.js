@@ -16,11 +16,10 @@ var run = function(client, channel, from, line){
 
   line = line.substring('!run '.length);
   var lineArr = line.split(" ");
+  let macroName = ''
   if(macros.hasOwnProperty(lineArr[0])) {
-    line = macros[lineArr[0]];
-    delete lineArr[0];
-  } else {
-    lineArr = []
+    macroName = lineArr.shift()
+    line = macros[macroName];
   }
 
   var script = sbox.createScript("exports.main = function() {" + line + "}");
@@ -35,7 +34,7 @@ var run = function(client, channel, from, line){
       res = res.toString();
       res = res.replace(/^"/,'');
       res = res.replace(/"$/,'');
-      client.say(channel, concat(res, lineArr.join(" ")));
+      client.say(channel, macroName[0] === '_' ? concat(res, lineArr.join(" ")) : res);
     }
     else {
       res = err.toString();
@@ -58,8 +57,9 @@ var init = function(config) {
 }
 
 var addMacro = function(name, script, callback) {
-    if(name.indexOf('_') !== 0) {
-        name = '_' + name;
+    if(!['_', '+'].includes(name[0])) {
+      callback('error: macro names must begin with \'+\' or \'_\'')
+      return
     }
     macros[name] = script;
     writeMacros(callback);
@@ -96,12 +96,11 @@ var delMacro = function(client, channel, from, line) {
         client.say(channel, 'removed');
     });
 }
-var printMacro = function(client, channel, from, line) {
-    line = line.substring('!printmacro '.length);
-    var words = line.split(' ');
-    var name = words[0];
-    client.say(channel, macros[name])
-}
+const printMacro = (client, channel, from, line) =>
+    client.say(channel, macros[line.split(' ')[1]])
+
+const listMacros = (client, channel, from, line) =>
+    client.say(channel, Object.keys(macros).join(' '))
 
 var replaceAll = function(string, target, replace) {
     return string.replace(new RegExp(target, 'g'), replace);
@@ -113,7 +112,8 @@ module.exports = {
     "!run": run,
     '!addmacro': newMacro,
     '!delmacro': delMacro,
-    '!printmacro': printMacro
+    '!printmacro': printMacro,
+    '!listmacros': listMacros
   },
   init: init
 }
