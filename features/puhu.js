@@ -1,6 +1,6 @@
 const spawn = require('child_process').spawn
 
-const querySes = (sesPath, client, channel, line) => {
+const querySes = (sesPath, line, callback) => {
   let lineArr = line.split(' ')
   lineArr.shift()
 
@@ -44,16 +44,16 @@ const querySes = (sesPath, client, channel, line) => {
     const out = targetLength
       ? lines.map(line => { return {line, dist: Math.abs(line.length - targetLength)}}).reduce((cur, best) => cur.dist < best.dist ? cur : best, {line:'', dist: Number.MAX_SAFE_INTEGER}).line
       : lines[primetext ? 0 : Math.floor(Math.random() * lines.length)]
-    client.say(channel, out.trim().replace('\n', ' ').substr(0, 500))
+    callback(out.trim().replace('\n', ' ').substr(0, 500))
   })
 }
 
 const puhu = (client, channel, from, line) => {
-  querySes('nns/cv_0.4/lm_lstm_epoch50.00_1.3930.t7', client, channel, line)
+  querySes('nns/cv_0.4/lm_lstm_epoch50.00_1.3930.t7', line, res => client.say(channel, res))
 }
 
 const inva = (client, channel, from, line) => {
-  querySes('nns/cv_0.1/lm_lstm_epoch50.00_1.7434.t7', client, channel, line)
+  querySes('nns/cv_0.1/lm_lstm_epoch50.00_1.7434.t7', line, res => client.say(channel, res + ' :D'))
 }
 
 module.exports = {
