@@ -1,23 +1,37 @@
 const spawn = require('child_process').spawn
 
-const puhu = (client,channel,from,line) => {
+const querySes = (sesPath, client, channel, line) => {
   let lineArr = line.split(' ')
   lineArr.shift()
+
   let primetext = ''
+  let targetLength = null
   let temperature = Math.min(Math.random() / 2 + 0.5, 1)
+
   if(isNaN(parseFloat(lineArr[0]))) {
     primetext = lineArr.join(' ')
   } else {
-    temperature = Math.max(Math.min(parseFloat(lineArr[0]), 1), 0.001)
-    lineArr.shift()
-    primetext = lineArr.join(' ')
+    if(lineArr[0] > 1) {
+      targetLength = Math.floor(parseFloat(lineArr[0]))
+    } else {
+      temperature = Math.max(Math.min(parseFloat(lineArr[0]), 1), 0.001)
+      lineArr.shift()
+      if(isNaN(parseInt(lineArr[0]))) {
+        primetext = lineArr.join(' ')
+      } else {
+        targetLength = Math.floor(parseFloat(lineArr[0]))
+        lineArr.shift()
+        primetext = lineArr.join(' ')
+      }
+    }
   }
+  console.log('target length', targetLength)
   temperature = temperature.toString().substring(0, 5)
   primetext = !primetext.match('/\'/') ? primetext : ''
 
   const seed = Math.floor(Math.random()*100000)
   const length = 500
-  const paramStr = `cd torch/char-rnn && /home/sudoer/torch/install/bin/th sample.lua nns/cv_0.4/lm_lstm_epoch50.00_1.3930.t7 -verbose 0 -length ${length} -seed ${seed} -temperature ${temperature} -primetext '${primetext}'`
+  const paramStr = `cd torch/char-rnn && /home/sudoer/torch/install/bin/th sample.lua ${sesPath} -verbose 0 -length ${length} -seed ${seed} -temperature ${temperature} -primetext '${primetext}'`
 
   console.log('running', paramStr)
   const proc = spawn('ssh', '-i ~/.ssh/id_rsa_nopasswd -p 2200 sudoer@localhost'.split(' ').concat([paramStr]))
@@ -26,15 +40,26 @@ const puhu = (client,channel,from,line) => {
   proc.stderr.on('data', (data) => console.log(`stderr: ${data}`))
   proc.on('close', (code) => {
     console.log(`sentient simo closed with code ${code}:\n${result}`)
-    const lines = result.split('\n')
-    const index = primetext ? 0 : Math.floor(Math.random() * lines.length)
-    client.say(channel, lines[index].trim())
+    const lines = result.split('\n').filter(line => line.trim().length > 1)
+    const out = targetLength
+      ? lines.map(line => { return {line, dist: Math.abs(line.length - targetLength)}}).reduce((cur, best) => cur.dist < best.dist ? cur : best, {line:'', dist: Number.MAX_SAFE_INTEGER}).line
+      : lines[primetext ? 0 : Math.floor(Math.random() * lines.length)]
+    client.say(channel, out.trim().replace('\n', ' ').substr(0, 500))
   })
+}
+
+const puhu = (client, channel, from, line) => {
+  querySes('nns/cv_0.4/lm_lstm_epoch50.00_1.3930.t7', client, channel, line)
+}
+
+const inva = (client, channel, from, line) => {
+  querySes('nns/cv_0.1/lm_lstm_epoch50.00_1.7434.t7', client, channel, line)
 }
 
 module.exports = {
   name: "puhu",
   commands: {
-    "!puhu": puhu
+    "!puhu": puhu,
+    "!inva": inva
   }
 }
