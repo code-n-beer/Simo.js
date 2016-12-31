@@ -49,8 +49,7 @@ const querySes = (sesPath, line, callback) => {
 }
 
 const puhu = (client, channel, from, line) => {
-  querySes('nns/cv_0.4/lm_lstm_epoch50.00_1.3930.t7', line, (res, lines) => {
-  })
+  querySes('nns/cv_0.4/lm_lstm_epoch50.00_1.3930.t7', line, res => client.say(channel, res))
 }
 
 const inva = (client, channel, from, line) => {
