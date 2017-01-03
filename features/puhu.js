@@ -56,6 +56,10 @@ const inva = (client, channel, from, line) => {
   querySes('nns/cv_0.1/lm_lstm_epoch50.00_1.7434.t7', line, res => client.say(channel, res + ' :D'))
 }
 
+const temmu = (client, channel, from, line) => {
+  querySes('nns/temmu_0.1/lm_lstm_epoch42.62_1.6605.t7', line, res => client.say(channel, res))
+}
+
 let ketaNick = 'nobody what the ass?'
 const keta = (client, channel, from, line) =>
   line.split(' ').length > 1 ? arvaaKeta(client, channel, from, line) : puhuKeta(client, channel, from, line)
@@ -99,6 +103,7 @@ module.exports = {
     "!puhu": puhu,
     "!inva": inva,
     "!ketä":keta,
-    "!keta": keta
+    "!keta": keta,
+    "!temmu": temmu
   }
 }
