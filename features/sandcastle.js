@@ -12,7 +12,34 @@ var sbox = new SandCastle({
     timeout: 10000
 });
 var run = function(client, channel, from, line){
-  //console.log(line); //debug
+
+  const runScript = (line) => {
+    var script = sbox.createScript("exports.main = function() {" + line + "}");
+
+    script.on('exit', function(err, output) {
+      console.log('err: ' + err);
+      console.log('output: ' + output);
+      if(!err) {
+       res = JSON.stringify(output);
+        res = res.substring(0,400);
+        res = res.replace(/(\r\n|\n|\r)/gm,' ');
+        res = res.toString();
+        res = res.replace(/^"/,'');
+        res = res.replace(/"$/,'');
+        client.say(channel, macroName[0] === '_' ? concat(res, lineArr.join(" ")) : res);
+      }
+      else {
+        res = err.toString();
+        client.say(channel, res);
+      }
+    });
+    script.on('timeout', function() {
+      console.log('script timed out');
+      client.say(channel, 'script timed out');
+    });
+
+    script.run({arg: lineArr.join(" ")});
+  }
 
   line = line.substring('!run '.length);
   var lineArr = line.split(" ");
@@ -22,31 +49,19 @@ var run = function(client, channel, from, line){
     line = macros[macroName];
   }
 
-  var script = sbox.createScript("exports.main = function() {" + line + "}");
-
-  script.on('exit', function(err, output) {
-    console.log('err: ' + err);
-    console.log('output: ' + output);
-    if(!err) {
-     res = JSON.stringify(output);
-      res = res.substring(0,400);
-      res = res.replace(/(\r\n|\n|\r)/gm,' ');
-      res = res.toString();
-      res = res.replace(/^"/,'');
-      res = res.replace(/"$/,'');
-      client.say(channel, macroName[0] === '_' ? concat(res, lineArr.join(" ")) : res);
+  const innerMacro = line.match(/!([\+_][a-ö]+)(\$\$(.*)\$\$)?/)
+  if(innerMacro && macros.hasOwnProperty(innerMacro[1])) {
+    const lineMock = '!run ' + (innerMacro[3] ? innerMacro[1] + ' ' + innerMacro[3] : innerMacro[1])
+    const clientMock = {
+      say: (_, res) => {
+        res = isNaN(parseFloat(res)) ? `"${res}"` : res
+        runScript(line.replace(innerMacro[0], res))
+      }
     }
-    else {
-      res = err.toString();
-      client.say(channel, res);
-    }
-  });
-  script.on('timeout', function() {
-    console.log('script timed out');
-    client.say(channel, 'script timed out');
-  });
-
-  script.run({arg: lineArr.join(" ")});
+    run(clientMock, '', '', lineMock)
+  } else {
+    runScript(line)
+  }
 }
 
 
