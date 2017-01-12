@@ -6,7 +6,7 @@ const querySes = (sesPath, line, callback) => {
 
   let primetext = ''
   let targetLength = null
-  let temperature = Math.min(Math.random() / 2 + 0.5, 1)
+  let temperature = Math.min(Math.random() / 3 + 0.67, 1)
 
   if(isNaN(parseFloat(lineArr[0]))) {
     primetext = lineArr.join(' ')
