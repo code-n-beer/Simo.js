@@ -49,10 +49,6 @@ const querySes = (sesPath, line, callback) => {
 }
 
 const puhu = (client, channel, from, line) => {
-  querySes('nns/cv_0.4/lm_lstm_epoch50.00_1.3930.t7', line, res => client.say(channel, res))
-}
-
-const puhu2 = (client, channel, from, line) => {
   querySes('nns/cv_0.6/lm_lstm_epoch34.03_1.3757.t7', line, res => client.say(channel, res))
 }
 
@@ -105,7 +101,6 @@ module.exports = {
   name: "puhu",
   commands: {
     "!puhu": puhu,
-    "!puhu2": puhu2,
     "!inva": inva,
     "!ketä":keta,
     "!keta": keta,
