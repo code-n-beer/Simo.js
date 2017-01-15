@@ -6,7 +6,7 @@
     "anagram": "*",
     "async": "1.4.2",
     "bluebird": "^3.4.6",
-    "cheerio": "*",
+    "cheerio": "^0.22.0",
     "escape-html": "^1.0.3",
     "express": "^4.13.4",
     "firebase": "2.3.0",
