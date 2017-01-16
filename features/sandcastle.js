@@ -20,8 +20,7 @@ var run = function(client, channel, from, line){
       console.log('err: ' + err);
       console.log('output: ' + output);
       if(!err) {
-       res = JSON.stringify(output);
-        res = res.substring(0,400);
+        res = output.substring(0,400);
         res = res.replace(/(\r\n|\n|\r)/gm,' ');
         res = res.toString();
         res = res.replace(/^"/,'');
