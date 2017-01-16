@@ -30,7 +30,7 @@ const querySes = (sesPath, line, callback) => {
   primetext = !primetext.match('/\'/') ? primetext : ''
 
   const seed = Math.floor(Math.random()*100000)
-  const length = 500
+  const length = 1000
   const paramStr = `cd torch/char-rnn && /home/sudoer/torch/install/bin/th sample.lua ${sesPath} -verbose 0 -length ${length} -seed ${seed} -temperature ${temperature} -primetext '${primetext}'`
 
   console.log('running', paramStr)
@@ -43,7 +43,7 @@ const querySes = (sesPath, line, callback) => {
     const lines = result.split('\n').filter(line => line.trim().length > 1)
     const out = targetLength
       ? lines.map(line => { return {line, dist: Math.abs(line.length - targetLength)}}).reduce((cur, best) => cur.dist < best.dist ? cur : best, {line:'', dist: Number.MAX_SAFE_INTEGER}).line
-      : lines[primetext ? 0 : Math.floor(Math.random() * lines.length)]
+      : lines[primetext ? 0 : Math.floor(Math.random() * (lines.length - 1))]
     callback(out.trim().replace('\n', ' ').substr(0, 500), lines)
   })
 }
@@ -58,6 +58,10 @@ const inva = (client, channel, from, line) => {
 
 const temmu = (client, channel, from, line) => {
   querySes('nns/temmu_0.1/lm_lstm_epoch42.62_1.6605.t7', line, res => client.say(channel, res))
+}
+
+const raamattu = (client, channel, from, line) => {
+  querySes('nns/raamattu_0.1/lm_lstm_epoch50.00_0.9381.t7', line, res => client.say(channel, res))
 }
 
 let ketaNick = 'nobody what the ass?'
@@ -104,6 +108,7 @@ module.exports = {
     "!inva": inva,
     "!ketä":keta,
     "!keta": keta,
-    "!temmu": temmu
+    "!temmu": temmu,
+    "!raamattu": raamattu
   }
 }
