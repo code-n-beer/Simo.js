@@ -44,6 +44,10 @@ const querySes = (sesPath, line, callback) => {
     const out = targetLength
       ? lines.map(line => { return {line, dist: Math.abs(line.length - targetLength)}}).reduce((cur, best) => cur.dist < best.dist ? cur : best, {line:'', dist: Number.MAX_SAFE_INTEGER}).line
       : lines[primetext ? 0 : Math.floor(Math.random() * (lines.length - 1))]
+    if(code !== 0 && !out) {
+      callback('SES exited with code ' + code, [])
+      return
+    }
     callback(out.trim().replace('\n', ' ').substr(0, 500), lines)
   })
 }
