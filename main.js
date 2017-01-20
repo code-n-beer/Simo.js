@@ -104,13 +104,25 @@ client.addListener('message', function(from, to, message) {
         if(~message.indexOf('!*')) {
           const macroFile = fs.readFileSync(macroPath);
           macros = JSON.parse(macroFile);
-          message = msg.split(' ').map(word => {
-            const cmd = word.slice(1)
-            return cmd.indexOf('*') === 0 ? macros.hasOwnProperty(cmd) ? '!' + macros[cmd].split(' ').join(' !') : `Unknown hypermacro: ${cmd}` : word
-          })
-          .join(' ')
-        }
+          message = macrofy(message, 0)
 
+          function macrofy(msg, depth) {
+            if(depth > 100) return "stack level too deep, giving up"
+            if(!~msg.indexOf('!*')) return msg
+            return macrofy(msg.split(' ').map(word => {
+              const cmd = word.slice(1)
+              return cmd.indexOf('*') === 0
+                ? macros.hasOwnProperty(cmd)
+                  ? macros[cmd].split(' ').map(macro =>
+                    macros.hasOwnProperty(macro) ? '!' + macro : macro
+                  ).join(' ')
+                  : `{Unknown hypermacro: ${cmd}}`
+                : word
+            })
+            .join(' '), depth + 1)
+          }
+        }
+          
         multicommand.exec(to, from, message, function(result) {
             if(!result)
                 return;
