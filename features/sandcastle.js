@@ -71,8 +71,8 @@ var init = function(config) {
 }
 
 var addMacro = function(name, script, callback) {
-    if(!['_', '+'].includes(name[0])) {
-      callback('error: macro names must begin with \'+\' or \'_\'')
+    if(!['_', '+','*'].includes(name[0])) {
+      callback('error: macro names must begin with \'+\',\'*\', or \'_\'')
       return
     }
     macros[name] = script;

@@ -2,6 +2,7 @@ var irc = require('irc');
 
 var fs = require('fs');
 var _ = require('underscore');
+const macroPath = __dirname + '/lib/macros.js'
 
 
 var features = require('./features/index.js').enabledFeatures;
@@ -97,6 +98,17 @@ client.addListener('message', function(from, to, message) {
                 client.say(to, title);
             });
             return; //this broke regexes btw
+            // ok
+        }
+        // hypermacros
+        if(~message.indexOf('!*')) {
+          const macroFile = fs.readFileSync(macroPath);
+          macros = JSON.parse(macroFile);
+          message = msg.split(' ').map(word => {
+            const cmd = word.slice(1)
+            return cmd.indexOf('*') === 0 ? macros.hasOwnProperty(cmd) ? '!' + macros[cmd].split(' ').join(' !') : `Unknown hypermacro: ${cmd}` : word
+          })
+          .join(' ')
         }
 
         multicommand.exec(to, from, message, function(result) {
