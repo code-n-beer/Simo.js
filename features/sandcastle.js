@@ -20,11 +20,12 @@ var run = function(client, channel, from, line){
       console.log('err: ' + err);
       console.log('output: ' + output);
       if(!err) {
-        res = output.substring(0,400);
+        res = String(output)
+        res = res.substring(0,400);
         res = res.replace(/(\r\n|\n|\r)/gm,' ');
-        res = res.toString();
         res = res.replace(/^"/,'');
         res = res.replace(/"$/,'');
+        res = res.length ? res : 'script returned empty array or string'
         client.say(channel, macroName[0] === '_' ? concat(res, lineArr.join(" ")) : res);
       }
       else {
