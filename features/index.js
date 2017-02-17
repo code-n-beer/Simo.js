@@ -3,7 +3,7 @@ var inits = [];
 var commands = {};
 var regexes = {};
 require("fs").readdirSync("./features/").forEach(function(file) {
-      if(file !== 'index.js'){
+      if(file !== 'index.js' && file.indexOf('.') !== 0){
           console.log("file: " + file);
           files.push(file);
           var feature = require("./" + file.substring(0,file.length-3));
