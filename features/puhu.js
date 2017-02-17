@@ -1,6 +1,6 @@
 const spawn = require('child_process').spawn
 
-const querySes = (sesPath, line, callback) => {
+const querySes = (sesPath, line, callback, rnnVersion="char") => {
   let lineArr = line.split(' ')
   lineArr.shift()
 
@@ -30,14 +30,19 @@ const querySes = (sesPath, line, callback) => {
   primetext = !primetext.match('/\'/') ? primetext : ''
 
   const seed = Math.floor(Math.random()*100000)
-  const length = 1000
-  const paramStr = `cd torch/char-rnn && /home/sudoer/torch/install/bin/th sample.lua ${sesPath} -verbose 0 -length ${length} -seed ${seed} -temperature ${temperature} -primetext '${primetext}'`
+  const length = 2000
+  const paramStr = {
+    "char": `cd torch/char-rnn && /home/sudoer/torch/install/bin/th sample.lua ${sesPath} -verbose 0 -length ${length} -seed ${seed} -temperature ${temperature} -primetext '${primetext}'`,
+    torch: `cd torch-rnn && /home/sudoer/torch/install/bin/th sample.lua -checkpoint ${sesPath} -length ${length} -temperature ${temperature} -start_text '${primetext}'`
+  }
 
   console.log('running', paramStr)
-  const proc = spawn('ssh', '-i ~/.ssh/id_rsa_nopasswd -p 2200 sudoer@localhost'.split(' ').concat([paramStr]))
+  const proc = spawn('ssh', '-i ~/.ssh/id_rsa_nopasswd sudoer@prototyping.xyz'.split(' ').concat([paramStr[rnnVersion]]))
   let result = ''
-  proc.stdout.on('data', (data) => result += data)
-  proc.stderr.on('data', (data) => console.log(`stderr: ${data}`))
+  proc.stdout.on('data', (data) => !~data.indexOf('not found: ') ? result += data : null)
+  proc.stderr.on('data', (data) => {
+    console.log(`stderr: ${data}`)
+  })
   proc.on('close', (code) => {
     console.log(`sentient simo closed with code ${code}:\n${result}`)
     const lines = result.split('\n').filter(line => line.trim().length > 1)
@@ -48,7 +53,7 @@ const querySes = (sesPath, line, callback) => {
       callback('SES exited with code ' + code, [])
       return
     }
-    callback(out.trim().replace('\n', ' ').substr(0, 500), lines)
+    callback(out.trim().replace('\n', ' ').substr(0, 400), lines)
   })
 }
 
@@ -66,6 +71,24 @@ const temmu = (client, channel, from, line) => {
 
 const raamattu = (client, channel, from, line) => {
   querySes('nns/raamattu_0.1/lm_lstm_epoch50.00_0.9381.t7', line, res => client.say(channel, res))
+}
+
+const rivoile = (client, channel, from, line) => {
+  querySes('nns/seksi_0.1/lm_lstm_epoch50.00_1.3498.t7', line, res => client.say(channel, res))
+}
+
+const vauva = (client, channel, from, line) => {
+  querySes('vauva_0.2/checkpoint_99000.t7', line, res => {
+    res = res.split('. ')[0]
+    client.say(channel, res) 
+  }, "torch")
+}
+
+const demi = (client, channel, from, line) => {
+  querySes('demi_0.1/checkpoint_99000.t7', line, res => {
+    res = res.split('. ')[0]
+    client.say(channel, res) 
+  }, "torch")
 }
 
 let ketaNick = 'nobody what the ass?'
@@ -113,6 +136,9 @@ module.exports = {
     "!ketä":keta,
     "!keta": keta,
     "!temmu": temmu,
-    "!raamattu": raamattu
+    "!raamattu": raamattu,
+    "!rivoile": rivoile,
+    "!vauva": vauva,
+    "!demi": demi
   }
 }
