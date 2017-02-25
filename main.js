@@ -4,7 +4,6 @@ var fs = require('fs');
 var _ = require('underscore');
 const macroPath = __dirname + '/lib/macros.js'
 
-
 var features = require('./features/index.js').enabledFeatures;
 var commands = features.commands;
 var inits = features.inits;
@@ -144,3 +143,24 @@ setTimeout(
     () => commands['!twitter'][0](client, config.channel, "startup", ""),
     3000);
 // ^ nice.
+
+/*
+ebin hq entry server start 
+*/
+var express = require('express')
+var app = express()
+
+app.post('/moro', function (req, res) {
+    console.log('terve terve')
+    client.say('#cnbhq', 'Joku hiippailee HQ:lla');
+    res.end();
+})
+
+app.listen(8321, function () {
+    console.log('Example app listening on port 8321!')
+})
+
+/*
+ebin hq entry server end 
+*/
+
