@@ -5,8 +5,8 @@
         "channel": "#channel",
         "botnick": "BotName",
         "username": "name",
-        "password": "hunter2",
-        "port": 0
+        "password": "",
+        "port": 6667
     },
     "twitter":
     {
