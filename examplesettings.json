@@ -21,5 +21,14 @@
       "client_id": "",
       "client_secret": "",
       "scope": ""
+    },
+    "wordpress":
+    {
+      "username": "default",
+      "password": "default"
+    },
+    "email":
+    {
+      "fileUrl": "./emailtemplate"
     }
 }
