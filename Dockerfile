@@ -1,12 +1,12 @@
 FROM alpine:3.4
 
-RUN apk add --no-cache nodejs-lts redis git python make g++ supervisor
+RUN apk add --no-cache icu-dev nodejs python make g++
 
-RUN npm install --global ircdjs
+RUN adduser -D nodejs
+RUN npm install -g nodemon
+#RUN chown -R nodejs:nodejs /simobot
 
-COPY ./config/supervisord.conf /etc/supervisord.conf
-COPY . /simobot 
+USER nodejs
+WORKDIR /simobot
 
-RUN npm install --global ircdjs && cd /simobot && npm install && rm -fr /root/.npm && npm cache clear
-
-CMD ["/usr/bin/supervisord"]
+CMD ["sh", "-c", "npm install && nodemon /simobot/main.js"]

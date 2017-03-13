@@ -1,0 +1,11 @@
+FROM alpine:3.4
+
+RUN apk add --no-cache icu-dev nodejs git python make g++
+RUN adduser -D nodejs
+USER nodejs
+WORKDIR /home/nodejs
+RUN npm install ircdjs && npm cache clear
+
+EXPOSE 6667
+
+CMD ["/home/nodejs/node_modules/ircdjs/bin/ircd.js"]
