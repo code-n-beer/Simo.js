@@ -1,0 +1,7 @@
+FROM redis:alpine
+
+ADD redis.conf /etc/redis/redis.conf
+RUN cat /etc/redis/redis.conf
+
+CMD ["redis-server", "/etc/redis/redis.conf"]
+

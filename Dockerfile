@@ -2,11 +2,18 @@ FROM alpine:3.4
 
 RUN apk add --no-cache icu-dev nodejs python make g++
 
-RUN adduser -D nodejs
+RUN adduser -D simobot
 RUN npm install -g nodemon
-#RUN chown -R nodejs:nodejs /simobot
 
-USER nodejs
+RUN mkdir /simobot
+ADD ./package.json /simobot/
 WORKDIR /simobot
+RUN npm install
 
-CMD ["sh", "-c", "npm install && nodemon /simobot/main.js"]
+ADD ./ /simobot/
+
+RUN chown -R simobot:simobot /simobot
+USER simobot
+
+
+CMD ["sh", "-c", "DOCKER_HOST=$(ip route | awk '/^default via /{print $3}') nodemon /simobot/main.js"]
