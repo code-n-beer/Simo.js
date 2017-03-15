@@ -12,8 +12,11 @@ RUN npm install
 
 ADD ./ /simobot/
 
+RUN apk add --update tzdata
+ENV TZ=Europe/Helsinki
+
 RUN chown -R simobot:simobot /simobot
 USER simobot
 
 
-CMD ["sh", "-c", "DOCKER_HOST=$(ip route | awk '/^default via /{print $3}') nodemon /simobot/main.js"]
+CMD ["sh", "-c", "DOCKER_HOST=$(ip route | awk '/^default via /{print $3}') ./repeatSimo"]
