@@ -2,13 +2,16 @@ version: '2'
 services:
   app:
     build: .
-    volumes:
-     - "./:/simobot"
     links:
      - redis
      - ircdjs
   redis:
-    image: "redis:alpine"
+    build:
+      context: .
+      dockerfile: Dockerfile_redis
+    volumes:
+      - "./redis-data/:/redis-data"
+    network_mode: "host"
   ircdjs:
     build:
       context: .
