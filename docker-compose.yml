@@ -7,6 +7,8 @@ services:
      - ircdjs
     volumes:
       - "./simojs-data/:/simojs-data"
+    links:
+      - "virtualsimo:virtualsimo"
   redis:
     build:
       context: .
@@ -20,3 +22,11 @@ services:
       dockerfile: Dockerfile_ircdjs
     ports:
      - "6667:6667"
+  virtualsimo:
+    build:
+      context: './virtual_private_simo/'
+    mem_limit: 4000000000
+    cpuset: '3'
+    cpu_quota: 50000
+    entrypoint: 'node index.js'
+    
