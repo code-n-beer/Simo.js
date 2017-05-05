@@ -5,6 +5,8 @@ services:
     links:
      - redis
      - ircdjs
+    volumes:
+      - "./simojs-data/:/simojs-data"
   redis:
     build:
       context: .

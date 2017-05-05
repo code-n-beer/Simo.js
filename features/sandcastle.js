@@ -76,6 +76,10 @@ var addMacro = function(name, script, callback) {
       callback('error: macro names must begin with \'+\',\'*\', or \'_\'')
       return
     }
+    if(script.split(' ').includes(name)) {
+      callback('error: recursion not allowed in macros')
+      return
+    }
     macros[name] = script;
     writeMacros(callback);
 }

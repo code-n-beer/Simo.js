@@ -9,3 +9,4 @@ build
 redis.conf
 redis-data/
 lib/macros.js
+simojs-data/

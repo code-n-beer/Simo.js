@@ -37,7 +37,7 @@ const querySes = (sesPath, line, callback, rnnVersion="char") => {
   }
 
   console.log('running', paramStr)
-  const proc = spawn('ssh', '-i ~/.ssh/id_rsa_nopasswd sudoer@prototyping.xyz'.split(' ').concat([paramStr[rnnVersion]]))
+  const proc = spawn('ssh', `-o StrictHostKeyChecking=no -i ./ssh/id_rsa_nopasswd sudoer@${process.env.DOCKER_HOST}`.split(' ').concat([paramStr[rnnVersion]]))
   let result = ''
   proc.stdout.on('data', (data) => !~data.indexOf('not found: ') ? result += data : null)
   proc.stderr.on('data', (data) => {

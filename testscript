@@ -1,0 +1,7 @@
+timeout 1s docker-compose run app
+
+if (($? == 124)); then
+  echo "./myscript timed out after 30 minutes" >> ./test.log
+  exit 124
+fi
+
