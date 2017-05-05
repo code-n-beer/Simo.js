@@ -6,10 +6,13 @@ app.use(bodyParser.urlencoded({ extended: false }))
 app.use(bodyParser.json())
 
 app.post('/run', function (req, res) {
+  console.log('got a new command')
   const exec = require('child_process').exec
   const cmd = req.body.command
+  console.log(`got ${req.body.command}`)
 
   exec(cmd, function(error, stdout, stderr) {
+    console.log(error, stdout, stderr)
     res.send({error, stdout, stderr})
   })
 })

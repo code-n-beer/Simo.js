@@ -6,10 +6,16 @@ RUN apt-get install -y sudo curl
 RUN curl -sL https://deb.nodesource.com/setup_7.x | sudo -E bash -
 RUN sudo apt-get install -y nodejs
 
-RUN mkdir -p /simo
+RUN mkdir -p /home/simobot
 
-ADD . /simo
+ADD . /home/simobot
 
-WORKDIR /simo
+RUN sudo groupadd -r simobot && sudo useradd -r -g simobot simobot
+
+RUN chown -R simobot:simobot /home/simobot
+
+USER simobot
+
+WORKDIR /home/simobot
 
 RUN npm install
