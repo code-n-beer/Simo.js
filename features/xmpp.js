@@ -6,7 +6,7 @@ var init = function(config, client) {
         password: config.wppass
     });
     xmppclient.on('online', function () {
-        console.log('online')
+        //console.log('online')
         xmppclient.send(new XMPPClient.Stanza('presence', { })
             .c('show').t('chat').up()
             .c('status').t('Happily echoing your <message/> stanzas')
@@ -14,7 +14,7 @@ var init = function(config, client) {
     });
     xmppclient.on('stanza', function (stanza) {
         if (stanza.is('message') && (stanza.attrs.type !== 'error')) {
-            console.log('new message');
+            //console.log('new message');
             var msgArray = stanza.children[0].children[0].split('\n');
             var headline = msgArray[0];
             var url = msgArray[msgArray.length - 1];
@@ -22,7 +22,7 @@ var init = function(config, client) {
             client.say(config.channel, message);
         }
         else {
-            console.log(stanza);
+            //console.log(stanza);
         }
     });
     xmppclient.on('error', function (msg) {

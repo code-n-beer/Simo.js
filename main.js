@@ -40,7 +40,7 @@ var client = new irc.Client(config.server, config.botnick, {
 });
 
 client.addListener('raw', function(message) {
-    console.log(message);
+    //console.log(message);
 });
 
 client.addListener('error', function(message) {
