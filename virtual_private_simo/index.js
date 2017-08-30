@@ -1,3 +1,4 @@
+const serializeError = require('serialize-error');
 const express = require('express')
 const app = express()
 const bodyParser = require('body-parser')
@@ -12,8 +13,12 @@ app.post('/run', function (req, res) {
   console.log(`got ${req.body.command}`)
 
   exec(cmd, function(error, stdout, stderr) {
-    console.log(error, stdout, stderr)
-    res.send({error, stdout, stderr})
+    let errormsg;
+    if(error) {
+      errormsg = serializeError(error)
+    }
+    console.log(errormsg, stdout, stderr)
+    res.send({error: errormsg, stdout, stderr})
   })
 })
 

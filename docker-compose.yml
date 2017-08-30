@@ -9,7 +9,9 @@ services:
       - "./simojs-data/:/simojs-data"
     links:
       - "virtualsimo:virtualsimo"
+    restart: always
   redis:
+    restart: always
     build:
       context: .
       dockerfile: Dockerfile_redis
@@ -17,16 +19,19 @@ services:
       - "./redis-data/:/redis-data"
     network_mode: "host"
   ircdjs:
+    restart: always
     build:
       context: .
       dockerfile: Dockerfile_ircdjs
     ports:
      - "6667:6667"
   virtualsimo:
+    restart: always
     build:
       context: './virtual_private_simo/'
     mem_limit: 4000000000
     cpuset: '3'
     cpu_quota: 50000
     entrypoint: 'node index.js'
+    #entrypoint: 'bash'
     

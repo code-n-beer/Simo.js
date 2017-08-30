@@ -1,0 +1,1 @@
+docker-compose build virtualsimo && docker-compose rm -f virtualsimo && docker-compose up virtualsimo

@@ -7,10 +7,18 @@ var concat = require('../lib/concat.js');
 //line is the full message the user sent
 //from is the nick of the user who sent the line
 var sbox = new SandCastle({
+    cwd: __dirname,
   api: __dirname + '/../lib/api.js',
     memoryLimitMB: 1000,
-    timeout: 10000
+    timeout: 10000,
 });
+
+var macros = {};
+var init = function(config) {
+    var macroFile = fs.readFileSync(macroPath);
+    macros = JSON.parse(macroFile);
+}
+
 var run = function(client, channel, from, line){
 
   const runScript = (line) => {
@@ -62,13 +70,6 @@ var run = function(client, channel, from, line){
   } else {
     runScript(line)
   }
-}
-
-
-var macros = {};
-var init = function(config) {
-    var macroFile = fs.readFileSync(macroPath);
-    macros = JSON.parse(macroFile);
 }
 
 var addMacro = function(name, script, callback) {
