@@ -28,23 +28,15 @@ const parse = (err, res, body) => {
   }
 }
 
+const format = (item) => `${item.price} | ${item.size}m2 | ${item.roomConfiguration} | ${item.buildingData.address}, ${item.buildingData.district} | ${item.url} | ${item.description}`
+
 const report = (item) => {
-  const stuff = `${item.price} | ${item.size}m2 | ${item.roomConfiguration} | ${item.buildingData.address}, ${item.buildingData.district} | ${item.url} | ${item.description}`
-  console.log(stuff)
-  client.say('#cnbhq', item)
+  client.say('#cnbhq', format(item))
 }
 
-let count = 0
-//client is used to send stuff
-//channel is needed to send stuff using client, but is also the channel's name where the line came from
-//line is the full message the user sent
-//from is the nick of the user who sent the line
 // eslint-disable-next-line no-unused-vars
 const latest = function(client, channel, from, line){
-  //console.log(line); //debug
-  count++
-  const ret =  'Feature has been ran ' + count + ' times.'
-  client.say(channel, ret)
+  client.say(channel, format(oldResults[0]))
 }
 
 module.exports = {
