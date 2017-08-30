@@ -3,8 +3,7 @@
 *   DON'T PUT YOUR FEATURE WITHIN THIS FILE
 */
 
-//when placed in the return object, will be run on simojs startup
-const init = function() {
+const init = function(config, client) {
 
 }
 
