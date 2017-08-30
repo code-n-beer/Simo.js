@@ -33,5 +33,3 @@ services:
     cpuset: '3'
     cpu_quota: 50000
     entrypoint: 'node index.js'
-    #entrypoint: 'bash'
-    
