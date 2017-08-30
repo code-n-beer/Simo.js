@@ -26,6 +26,7 @@
     "sqlite3": "*",
     "string": "*",
     "underscore": "*",
+    "lodash": "4.17.4",
     "usage": "*",
     "user-stream": "*",
     "xml2js": "*"
