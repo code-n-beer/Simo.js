@@ -7,6 +7,7 @@ const timeout = 1000 * 60 * 10  // once every 10 mins
 const init = function(config, client_) {
   client = client_
   setInterval(() => fetch(url), timeout)
+  fetch(url)
 }
 
 const fetch = (url) => request(url, parse)
