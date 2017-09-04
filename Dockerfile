@@ -19,6 +19,8 @@ ADD ./ /simobot/
 
 RUN usermod -u 1000 simobot
 RUN chown -R simobot:simobot /simobot
+RUN chown -R simobot:simobot /simobot/simojs-data/
+RUN chmod 600 /simobot/simojs-data/ssh/id_rsa_nopasswd
 #USER simobot
 
 #RUN id -u simobot

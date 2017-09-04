@@ -23,5 +23,5 @@ app.post('/run', function (req, res) {
 })
 
 app.listen(3500, function () {
-  console.log('Example app listening on port 3500!')
+  console.log('Virtual simo started!')
 })

@@ -1,11 +1,12 @@
+const express = require('express')
+const app = express()
+app.listen(8123, function () {
+  console.log('Simo macro lister listening on port 8123')
+})
 var SandCastle = require('sandcastle').SandCastle;
 var fs = require('fs');
 var macroPath = __dirname + '/../lib/macros.js';
 var concat = require('../lib/concat.js');
-//client is used to send stuff
-//channel is needed to send stuff using client, but is also the channel's name where the line came from
-//line is the full message the user sent
-//from is the nick of the user who sent the line
 var sbox = new SandCastle({
     cwd: __dirname,
   api: __dirname + '/../lib/api.js',
@@ -121,6 +122,10 @@ const printMacro = (client, channel, from, line) =>
 
 const listMacros = (client, channel, from, line) =>
     client.say(channel, Object.keys(macros).join(' '))
+
+app.get('/list-macros', (req, res) => {
+  res.json(Object.keys(macros))
+})
 
 var replaceAll = function(string, target, replace) {
     return string.replace(new RegExp(target, 'g'), replace);
