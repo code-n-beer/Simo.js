@@ -5,6 +5,7 @@
   "dependencies": {
     "anagram": "*",
     "async": "1.4.2",
+    "base-64": "^0.1.0",
     "bluebird": "^3.4.6",
     "cheerio": "^0.22.0",
     "escape-html": "^1.0.3",
@@ -14,6 +15,7 @@
     "iconv-lite": "^0.4.13",
     "irc": "*",
     "line-reader": "*",
+    "lodash": "4.17.4",
     "moment": "*",
     "multiparty": "^4.1.2",
     "node-xmpp-client": "^3.0.0",
@@ -26,7 +28,6 @@
     "sqlite3": "*",
     "string": "*",
     "underscore": "*",
-    "lodash": "4.17.4",
     "usage": "*",
     "user-stream": "*",
     "xml2js": "*"
