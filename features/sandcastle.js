@@ -35,7 +35,8 @@ var run = function(client, channel, from, line){
         res = res.replace(/^"/,'');
         res = res.replace(/"$/,'');
         res = res.length ? res : 'script returned empty string'
-        client.say(channel, macroName[0] === '_' ? concat(res, lineArr.join(" ")) : res);
+        if(!~res.indexOf('[OO HILJAA]'))
+          client.say(channel, macroName[0] === '_' ? concat(res, lineArr.join(" ")) : res);
       }
       else {
         res = err.toString();
