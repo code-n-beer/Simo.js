@@ -96,9 +96,11 @@ client.addListener('message', function(from, to, message) {
                 }
                 client.say(to, title);
             });
-            return; //this broke regexes btw
-            // ok
+            message = `!*r ${to} ${from} ${message}`
+        } else {
+            message = `!*c ${to} ${from} ${message}`
         }
+        
         // hypermacros
         if(~message.indexOf('!*')) {
           const macroFile = fs.readFileSync(macroPath);
