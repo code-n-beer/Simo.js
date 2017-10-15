@@ -2,36 +2,46 @@ const request = require('request')
 const _ = require('lodash')
 let client
 const url = 'https://asunnot.oikotie.fi/api/cards?cardType=106&limit=24&locations=%5B%5B64,6,%22Helsinki%22%5D%5D&offset=0&price%5Bmax%5D=700&price%5Bmin%5D=10&size%5Bmax%5D=150&size%5Bmin%5D=30&sortBy=published_desc'
+const kommuuniUrl = 'https://asunnot.oikotie.fi/api/cards?cardType=101&limit=24&locations=%5B%5B64,6,%22Helsinki%22%5D%5D&offset=0&price%5Bmax%5D=1800&price%5Bmin%5D=1000&roomCount%5B%5D=5&roomCount%5B%5D=6&roomCount%5B%5D=4&roomCount%5B%5D=7&size%5Bmin%5D=70&sortBy=published_desc'
+
 const timeout = 1000 * 60 * 10  // once every 10 mins
+
+let oldResults = []
+let oldResults2 = []
+
 // eslint-disable-next-line no-unused-vars
 const init = function(config, client_) {
   client = client_
-  setInterval(() => fetch(url), timeout)
-  fetch(url)
+
+  setInterval(() => fetch(url, reporter(oldResults, "#cnbhq")), timeout)
+  setInterval(() => fetch(kommuuniUrl, reporter(oldResults2, "#cnb-kommuuni")), timeout)
+  fetch(url, reporter(oldResults, "#cnbhq"))
+  fetch(kommuuniUrl, reporter(oldResults2, "#cnb-kommuuni"))
 }
 
-const fetch = (url) => request(url, parse)
-
-let oldResults = []
-const parse = (err, res, body) => {
-  if (err) console.log(`err: ${err}`)
-  const results = JSON.parse(body).cards
-
+const reporter = (oldResults, channel) => results => {
   if (!oldResults[0]) { // First load
     console.log('first load, not reporting')
     //report(results[0])
     return oldResults = results
   } else if (oldResults[0].id !== results[0].id) { // haz new stuff
-    _.takeWhile(results, o => o.id !== oldResults[0].id).map(report)
+    _.takeWhile(results, o => o.id !== oldResults[0].id).map(report(channel))
     oldResults = results
   } else {
     console.log('nothing new to report')
   }
 }
 
+const fetch = (url, cb) => request(url, parse(cb))
+
+const parse = cb => (err, res, body) => {
+  if (err) return console.log(`err: ${err}`)
+  cb(JSON.parse(body).cards)
+}
+
 const format = (item) => `${item.price} | ${item.size}m2 | ${item.roomConfiguration} | ${item.buildingData.address}, ${item.buildingData.district} | ${item.url} | ${item.description}`
 
-const report = (item) => {
+const report = channel => item => {
   client.say('#cnbhq', format(item))
 }
 
