@@ -42,7 +42,7 @@ const parse = cb => (err, res, body) => {
 const format = (item) => `${item.price} | ${item.size}m2 | ${item.roomConfiguration} | ${item.buildingData.address}, ${item.buildingData.district} | ${item.url} | ${item.description}`
 
 const report = channel => item => {
-  client.say('#cnbhq', format(item))
+  client.say(channel, format(item))
 }
 
 // eslint-disable-next-line no-unused-vars
