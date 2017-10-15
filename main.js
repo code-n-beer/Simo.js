@@ -90,6 +90,7 @@ client.addListener('message', function(from, to, message) {
     try {
 
         if(msg.indexOf('!') !== 0) {
+            console.log('going to call urltitle')
             urltitle.getTitle(message, function(title) {
                 if(!title) {
                     return;
