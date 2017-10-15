@@ -13,23 +13,19 @@ let oldResults2 = []
 const init = function(config, client_) {
   client = client_
 
-  setInterval(() => fetch(url, reporter(oldResults, "#cnbhq")), timeout)
-  setInterval(() => fetch(kommuuniUrl, reporter(oldResults2, "#cnb-kommuuni")), timeout)
-  fetch(url, reporter(oldResults, "#cnbhq"))
-  fetch(kommuuniUrl, reporter(oldResults2, "#cnb-kommuuni"))
+  setInterval(() => oldResults = fetch(url, reporter(oldResults, "#cnbhq")), timeout)
+  setInterval(() => oldResults2 = fetch(kommuuniUrl, reporter(oldResults2, "#cnb-kommuuni")), timeout)
+  oldResults = fetch(url, reporter(oldResults, "#cnbhq"))
+  oldResults2 = fetch(kommuuniUrl, reporter(oldResults2, "#cnb-kommuuni"))
 }
 
 const reporter = (oldResults, channel) => results => {
   if (!oldResults[0]) { // First load
     console.log('first load, not reporting')
-    //report(results[0])
-    return oldResults = results
   } else if (oldResults[0].id !== results[0].id) { // haz new stuff
     _.takeWhile(results, o => o.id !== oldResults[0].id).map(report(channel))
-    oldResults = results
-  } else {
-    console.log('nothing new to report')
   }
+  return results
 }
 
 const fetch = (url, cb) => request(url, parse(cb))
