@@ -1,8 +1,8 @@
-var fiftyshadesgen = require('../lib/50shadesgen/src/js/generator.js');
-var concat = require('../lib/concat.js');
-var request = require('request');
-var htmlparser = require('htmlparser2');
-var iconvlite = require('iconv-lite');
+const fiftyshadesgen = require('../lib/50shadesgen/src/js/generator.js');
+const concat = require('../lib/concat.js');
+const request = require('request');
+const htmlparser = require('htmlparser2');
+const iconvlite = require('iconv-lite');
 
 var begincapt = false;
 var puppulause = "";

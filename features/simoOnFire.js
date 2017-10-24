@@ -1,4 +1,4 @@
-var Firebase = require("firebase");
+const Firebase = require("firebase");
 var simoOnFire = new Firebase("https://simocmds.firebaseio.com");
 
 var logActionToFireBase = function(from, to, message, commands) {

@@ -1,4 +1,4 @@
-var usage = require('usage');
+const usage = require('usage');
 
 var sys_usage = function(client, channel, from, line) {
     usage.lookup(process.pid, function(err, result) {

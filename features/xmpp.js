@@ -1,4 +1,4 @@
-var XMPPClient = require('node-xmpp-client');
+const XMPPClient = require('node-xmpp-client');
 var client;
 var init = function(config, client) {
     xmppclient = new XMPPClient({

@@ -6,7 +6,7 @@ require("fs").readdirSync("/simobot/features/").forEach(function(file) {
     if (file !== 'index.js' && file.indexOf('.') !== 0) {
         console.log("file: " + file);
         files.push(file);
-        var feature = require("/simobot/features/" + file.substring(0, file.length - 3));
+        const feature = require("/simobot/features/" + file.substring(0, file.length - 3));
         if (feature.init) {
             inits.push(feature.init);
         }

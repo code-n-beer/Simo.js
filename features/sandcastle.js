@@ -3,10 +3,10 @@ const app = express()
 app.listen(8123, function() {
     console.log('Simo macro lister listening on port 8123')
 })
-var SandCastle = require('sandcastle').SandCastle;
-var fs = require('fs');
+const SandCastle = require('sandcastle').SandCastle;
+const fs = require('fs');
 var macroPath = __dirname + '/../lib/macros.js';
-var concat = require('../lib/concat.js');
+const concat = require('../lib/concat.js');
 var sbox = new SandCastle({
     cwd: __dirname,
     api: __dirname + '/../lib/api.js',

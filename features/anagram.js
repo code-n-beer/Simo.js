@@ -1,4 +1,4 @@
-var anagram = require('anagram');
+const anagram = require('anagram');
 
 var ana = function(client, channel, from, line) {
     var text = line.split(" ")[1];

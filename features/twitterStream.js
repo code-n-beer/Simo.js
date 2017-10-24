@@ -1,6 +1,6 @@
-var Stream = require('user-stream');
+const Stream = require('user-stream');
 
-var fs = require('fs');
+const fs = require('fs');
 var settings = fs.readFileSync('./settings.json');
 settings = JSON.parse(settings);
 

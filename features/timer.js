@@ -1,7 +1,8 @@
-var _ = require('underscore'),
+const _ = require('underscore'),
     moment = require('moment'),
-    TimerDB = require('../lib/timerdb').TimerDB,
-    timerdb = new TimerDB(),
+    TimerDB = require('../lib/timerdb').TimerDB;
+
+var timerdb = new TimerDB(),
     date_strs = ['HH:mm', 'DD.MM', 'DD.MM HH:mm', 'DD.MM.YYYY', 'DD.MM.YYYY HH:mm'],
     help_str = "Supported formats: [number]s/m/h, " + date_strs.join(", ");
 

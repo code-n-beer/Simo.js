@@ -1,5 +1,5 @@
-var fiftyshadesgen = require('../lib/50shadesgen/src/js/generator.js');
-var concat = require('../lib/concat.js');
+const fiftyshadesgen = require('../lib/50shadesgen/src/js/generator.js');
+const concat = require('../lib/concat.js');
 
 
 var fiftyshades = function(client, channel, from, line) {

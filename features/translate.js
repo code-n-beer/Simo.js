@@ -1,4 +1,4 @@
-var request = require('request'),
+const request = require('request'),
     qs = require('querystring'),
     parseXML = require('xml2js').parseString,
     _ = require('underscore'),
