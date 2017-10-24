@@ -1,12 +1,12 @@
 var min = 2;
 var max = 15;
 
-var uguu = function(client, channel, from, line){
+var uguu = function(client, channel, from, line) {
     var nick = line.split(" ")[1];
 
-    if(nick) {
+    if (nick) {
         while (nick.match(/[aeiouAEIOU]$/i)) {
-            nick = nick.slice(0, nick.length-1);
+            nick = nick.slice(0, nick.length - 1);
         }
     } else {
         nick = "ug";
@@ -20,12 +20,12 @@ var uguu = function(client, channel, from, line){
 
     nick += "~";
 
-    client.say(channel, nick); 
+    client.say(channel, nick);
 }
 
 module.exports = {
     name: "uguu",
-    commands: { 
+    commands: {
         "!uguu": uguu,
     }
 }

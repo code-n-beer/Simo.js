@@ -16,7 +16,7 @@ var TimerPoller = require('./lib/timerpoller').TimerPoller;
 var MultiCommand = require('./lib/multicommand').MultiCommand;
 var UrlTitle = require('./lib/urltitle').UrlTitle;
 
-var server,channel,nick,username,password,port;
+var server, channel, nick, username, password, port;
 var config = {
     server: settings.general.server,
     channel: settings.general.channel,
@@ -47,8 +47,7 @@ client.addListener('error', function(message) {
     console.log('error: ', message);
 });
 
-for(var init in inits)
-{
+for (var init in inits) {
     inits[init](config, client);
 }
 
@@ -64,35 +63,31 @@ client.addListener('message', function(from, to, message) {
 
     var msg = message.toLowerCase();
     //In case of a query, send the msg to the querier instead of ourselves
-    if(to.indexOf("#") === -1) {
+    if (to.indexOf("#") === -1) {
         to = from;
     }
     // Enough of this shit
-    if(from == config.botnick) {
+    if (from == config.botnick) {
         return;
     }
 
     try {
         Object.keys(regexes).forEach(function(key) {
-                var regex = new RegExp(key);
-                {
-                    for(var i = 0; i < regexes[key].length; i++)
-                    {
-                        regexes[key][i](client, to, from, message);
-                    }
+            var regex = new RegExp(key); {
+                for (var i = 0; i < regexes[key].length; i++) {
+                    regexes[key][i](client, to, from, message);
                 }
+            }
         });
-    }
-
-    catch(err){
+    } catch (err) {
         console.log(err);
     }
     try {
 
-        if(msg.indexOf('!') !== 0) {
+        if (msg.indexOf('!') !== 0) {
             console.log('going to call urltitle')
             urltitle.getTitle(message, function(title) {
-                if(!title) {
+                if (!title) {
                     return;
                 }
                 client.say(to, title);
@@ -101,38 +96,37 @@ client.addListener('message', function(from, to, message) {
         } else {
             message = `!*c ${to} ${from} ${message}`
         }
-        
-        // hypermacros
-        if(~message.indexOf('!*')) {
-          const macroFile = fs.readFileSync(macroPath);
-          macros = JSON.parse(macroFile);
-          message = macrofy(message, 0)
 
-          function macrofy(msg, depth) {
-            if(depth > 100) return "stack level too deep, giving up"
-            if(!~msg.indexOf('!*')) return msg
-            return macrofy(msg.split(' ').map(word => {
-              const cmd = word.slice(1)
-              return cmd.indexOf('*') === 0
-                ? macros.hasOwnProperty(cmd)
-                  ? macros[cmd].split(' ').map(macro =>
-                    macros.hasOwnProperty(macro) ? '!' + macro : macro
-                  ).join(' ')
-                  : `{Unknown hypermacro: ${cmd}}`
-                : word
-            })
-            .join(' '), depth + 1)
-          }
+        // hypermacros
+        if (~message.indexOf('!*')) {
+            const macroFile = fs.readFileSync(macroPath);
+            macros = JSON.parse(macroFile);
+            message = macrofy(message, 0)
+
+            function macrofy(msg, depth) {
+                if (depth > 100) return "stack level too deep, giving up"
+                if (!~msg.indexOf('!*')) return msg
+                return macrofy(msg.split(' ').map(word => {
+                        const cmd = word.slice(1)
+                        return cmd.indexOf('*') === 0 ?
+                            macros.hasOwnProperty(cmd) ?
+                            macros[cmd].split(' ').map(macro =>
+                                macros.hasOwnProperty(macro) ? '!' + macro : macro
+                            ).join(' ') :
+                            `{Unknown hypermacro: ${cmd}}` :
+                            word
+                    })
+                    .join(' '), depth + 1)
+            }
         }
-          
+
         multicommand.exec(to, from, message, function(result) {
-            if(!result)
+            if (!result)
                 return;
             client.say(to, result);
         });
 
-        }
-    catch (err) {
+    } catch (err) {
         console.log(err);
     }
 });
@@ -146,4 +140,3 @@ setTimeout(
     () => commands['!twitter'][0](client, config.channel, "startup", ""),
     3000);
 // ^ nice.
-
