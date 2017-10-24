@@ -4,8 +4,7 @@ var concat = require('../lib/concat.js');
 
 //translate.commands["!tr"](client, channel, from, 
 
-var init = function(config) {
-}
+var init = function(config) {}
 
 var options = {
     host: 'thermopylas.fi',
@@ -21,7 +20,7 @@ var protip = function(client, channel, from, line) {
             translate(client, channel, from, "!tr en " + concat(chunk, line));
         });
     }).on('error', function(e) {
-        console.log("error: " + e.message);   
+        console.log("error: " + e.message);
     });
 }
 
@@ -32,7 +31,7 @@ var hurri = function(client, channel, from, line) {
             translate(client, channel, from, "!tr sv " + concat(chunk, line));
         });
     }).on('error', function(e) {
-        console.log("error: " + e.message);   
+        console.log("error: " + e.message);
     });
 
 }
@@ -43,14 +42,16 @@ var koksi = function(client, channel, from, line) {
         }
     }
     var sej = say(client, channel, from, translate);
-    var clinu = {say: sej};
+    var clinu = {
+        say: sej
+    };
     http.get(options, function(res) {
         res.setEncoding('utf8');
         res.on('data', function(chunk) {
             translate(clinu, channel, from, "!tr ko " + concat(chunk, line));
         });
     }).on('error', function(e) {
-        console.log("error: " + e.message);   
+        console.log("error: " + e.message);
     });
 }
 
@@ -61,7 +62,7 @@ var niksi = function(client, channel, from, line) {
             client.say(channel, concat(chunk, line))
         });
     }).on('error', function(e) {
-        console.log("error: " + e.message);   
+        console.log("error: " + e.message);
     });
 }
 module.exports = {

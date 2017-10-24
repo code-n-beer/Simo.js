@@ -6,55 +6,61 @@ var iconvlite = require('iconv-lite');
 
 var begincapt = false;
 var puppulause = "";
+
 function new_parser(say) {
     return new htmlparser.Parser({
-        onopentag: function(name, attribs){
-            if(name === "p" && attribs.class === "lause"){
+        onopentag: function(name, attribs) {
+            if (name === "p" && attribs.class === "lause") {
                 begincapt = true;
             }
         },
-        ontext: function(text){
-            if(begincapt) say(text);
+        ontext: function(text) {
+            if (begincapt) say(text);
         },
-        onclosetag: function(tagname){
-            if(tagname === "p"){
+        onclosetag: function(tagname) {
+            if (tagname === "p") {
                 begincapt = false;
             }
         }
-    }, {decodeEntities: true});
+    }, {
+        decodeEntities: true
+    });
 }
 
 function get_puppu(url, client, channel, line) {
     var parser = new_parser(client, channel);
-    request({url: url, encoding:null}, function(error, res, body) {
-        if(error) return console.log(error)
+    request({
+        url: url,
+        encoding: null
+    }, function(error, res, body) {
+        if (error) return console.log(error)
         parser.write(iconvlite.decode(body, 'iso-8859-1'));
         parser.end();
     });
 }
 
-var puppu = function(client, channel, from, line){
+var puppu = function(client, channel, from, line) {
     var say = function(text) {
         client.say(channel, concat(text, line));
     }
     get_puppu("http://puppulausegeneraattori.fi/", say);
 }
 
-var opiskelupuppu = function(client, channel, from, line){
+var opiskelupuppu = function(client, channel, from, line) {
     var say = function(text) {
         client.say(channel, concat(text, line));
     }
     get_puppu("http://puppulausegeneraattori.fi/aihe/Opiskelijaelama", say);
 }
 
-var tyopuppu = function(client, channel, from, line){
+var tyopuppu = function(client, channel, from, line) {
     var say = function(text) {
         client.say(channel, concat(text, line));
     }
     get_puppu("http://puppulausegeneraattori.fi/aihe/Yritysmaailma", say);
 }
 
-var itpuppu = function(client, channel, from, line){
+var itpuppu = function(client, channel, from, line) {
     var say = function(text) {
         client.say(channel, concat(text, line));
     }
@@ -62,7 +68,7 @@ var itpuppu = function(client, channel, from, line){
 }
 module.exports = {
     name: "puppulause",
-    commands: { 
+    commands: {
         "!puppu": puppu,
         "!opiskelupuppu": opiskelupuppu,
         "!opuppu": opiskelupuppu,

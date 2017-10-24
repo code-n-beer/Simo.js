@@ -3,7 +3,7 @@ var main = function(client, channel, from, line) {
 
     var result = eval(script);
 
-    client.say(channel, result.toString()); 
+    client.say(channel, result.toString());
 }
 
 module.exports = {

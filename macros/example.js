@@ -1,3 +1,3 @@
 module.exports = {
-  '_test': "exit('test')"
+    '_test': "exit('test')"
 }
