@@ -1,10 +1,10 @@
-var irc = require('irc');
+const irc = require('irc');
 
-var fs = require('fs');
-var _ = require('underscore');
+const fs = require('fs');
+const _ = require('underscore');
 const macroPath = __dirname + '/lib/macros.js'
 
-var features = require('./features/index.js').enabledFeatures;
+const features = require('./features/index.js').enabledFeatures;
 var commands = features.commands;
 var inits = features.inits;
 var regexes = features.regexes;
@@ -12,9 +12,9 @@ var regexes = features.regexes;
 var settings = fs.readFileSync('./settings.json');
 settings = JSON.parse(settings);
 
-var TimerPoller = require('./lib/timerpoller').TimerPoller;
-var MultiCommand = require('./lib/multicommand').MultiCommand;
-var UrlTitle = require('./lib/urltitle').UrlTitle;
+const TimerPoller = require('./lib/timerpoller').TimerPoller;
+const MultiCommand = require('./lib/multicommand').MultiCommand;
+const UrlTitle = require('./lib/urltitle').UrlTitle;
 
 var server, channel, nick, username, password, port;
 var config = {
@@ -51,7 +51,7 @@ for (var init in inits) {
     inits[init](config, client);
 }
 
-var logger = require('./features/simoOnFire.js').loggingAction;
+const logger = require('./features/simoOnFire.js').loggingAction;
 var multicommand = new MultiCommand(commands, 100);
 var urltitle = new UrlTitle();
 

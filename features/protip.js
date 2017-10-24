@@ -1,6 +1,6 @@
-var translate = require('./translate.js').commands["!tr"];
-var http = require('http');
-var concat = require('../lib/concat.js');
+const translate = require('./translate.js').commands["!tr"];
+const http = require('http');
+const concat = require('../lib/concat.js');
 
 //translate.commands["!tr"](client, channel, from, 
 

@@ -1,10 +1,11 @@
-var request = require('request'),
+const request = require('request'),
     _ = require('underscore'),
     moment = require('moment'),
     util = require('util'),
     S = require('string'),
-    async = require('async'),
-    restaurants = {
+    async = require('async');
+
+var restaurants = {
         updated_on: 0
     },
     menus = [];

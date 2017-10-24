@@ -1,5 +1,5 @@
-var exec = require('child_process').exec;
-var path = require('path');
+const exec = require('child_process').exec;
+const path = require('path');
 
 var count = 0;
 var hello = function(client, channel, from, line) {
