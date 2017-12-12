@@ -11,3 +11,4 @@ redis-data/
 lib/macros.js
 simojs-data/
 ssh/id_rsa_nopasswd
+*.swp
