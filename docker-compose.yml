@@ -19,6 +19,7 @@ services:
     volumes:
       - "./redis-data/:/redis-data"
     network_mode: "host"
+
   ircdjs:
     restart: always
     build:
