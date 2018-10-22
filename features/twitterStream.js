@@ -74,12 +74,10 @@ var twitter = function(client, channel, from, line) {
     // If not closed on purpose, reopen stream
     stream.on('close', function() {
         if (streamActive) {
-            client.say(channel, "Twitter stream closed, trying to reopen");
             streamActive = false;
             stream.destroy();
             setTimeout(twitter(client, channel, from, line), 2000);
         } else {
-            client.say(channel, "Twitter stream closed");
             streamActive = false;
         }
     });
@@ -91,7 +89,6 @@ var twitter = function(client, channel, from, line) {
             stream.destroy();
             setTimeout(twitter(client, channel, from, line), 2000);
         } else {
-            client.say(channel, "Twitter stream closed");
             streamActive = false;
         }
     });
