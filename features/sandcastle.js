@@ -30,7 +30,9 @@ var run = function(client, channel, from, line) {
             console.log('output: ' + output);
             if (!err) {
                 res = output instanceof Object ? JSON.stringify(output) : String(output)
-                res = res.substring(0, 400);
+                if (!client.isMock) {
+                    res = res.substring(0, 400);
+                }
                 res = res.replace(/(\r\n|\n|\r)/gm, ' ');
                 res = res.replace(/^"/, '');
                 res = res.replace(/"$/, '');
@@ -64,6 +66,7 @@ var run = function(client, channel, from, line) {
     if (innerMacro && macros.hasOwnProperty(innerMacro[1])) {
         const lineMock = '!run ' + (innerMacro[3] ? innerMacro[1] + ' ' + innerMacro[3] : innerMacro[1])
         const clientMock = {
+            isMock: true,
             say: (_, res) => {
                 res = isNaN(parseFloat(res)) ? `"${res}"` : res
                 runScript(line.replace(innerMacro[0], res))
