@@ -6,7 +6,6 @@ node_modules/
 resources/simojs.sqlite
 .tmp
 build
-redis.conf
 redis-data/
 lib/macros.js
 simojs-data/
