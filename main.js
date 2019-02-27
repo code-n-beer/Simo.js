@@ -1,4 +1,4 @@
-const irc = require('irc');
+const irc = require('irc-upd');
 
 const fs = require('fs');
 const _ = require('underscore');
@@ -32,26 +32,33 @@ var config = {
 };
 
 var client = new irc.Client(config.server, config.botnick, {
+    debug: true,
+    showErrors: true,
     channels: [config.channel],
     port: config.port,
-    autoConnect: false,
+    autoConnect: true, 
     password: config.password,
-    userName: config.username
+    userName: config.username,
+    millisecondsOfSilenceBeforePingSent: 30 * 1000,
+    millisecondsBeforePingTimeout: 15 * 1000
 });
 
 client.addListener('raw', function(message) {
-    //console.log(message);
+    console.log(message);
 });
 
 client.addListener('error', function(message) {
     console.log('error: ', message);
 });
 
+console.log("Starting feature initialization")
 for (var init in inits) {
     inits[init](config, client);
+    console.log(init + " initialized");
 }
+console.log("All features initialized");
 
-const logger = require('./features/simoOnFire.js').loggingAction;
+//const logger = require('./features/simoOnFire.js').loggingAction;
 var multicommand = new MultiCommand(commands, 100);
 var urltitle = new UrlTitle();
 
@@ -59,7 +66,7 @@ client.addListener('message', function(from, to, message) {
     //console.log("from: " + from);
     //console.log("to: " + to);
     //console.log("message: " + message);
-    require('./features/simoOnFire.js').loggingAction(from, to, message, commands);
+    //require('./features/simoOnFire.js').loggingAction(from, to, message, commands);
 
     var msg = message.toLowerCase();
     //In case of a query, send the msg to the querier instead of ourselves
@@ -131,9 +138,9 @@ client.addListener('message', function(from, to, message) {
     }
 });
 
-client.connect(function() {
-    new TimerPoller(client, 30);
-});
+//client.connect(function() {
+//    new TimerPoller(client, 30);
+//});
 
 // Start twitter stream on connect
 setTimeout(

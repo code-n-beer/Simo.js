@@ -2,5 +2,6 @@ FROM redis:alpine
 
 ADD redis.conf /etc/redis/redis.conf
 RUN cat /etc/redis/redis.conf
+EXPOSE 6379
 
 CMD ["redis-server", "/etc/redis/redis.conf"]

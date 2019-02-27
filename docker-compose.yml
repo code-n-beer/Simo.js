@@ -1,10 +1,18 @@
 version: '2'
 services:
-  app:
+  pythonsimo:
+    build: 
+      context: .
+      dockerfile: Dockerfile_pythonsimo
+    links:
+      - redis
+    restart: always
+
+  simojs:
     build: .
     links:
      - redis
-     - ircdjs
+     - pythonsimo
     volumes:
       - "./simojs-data/:/simojs-data"
     restart: always
@@ -18,22 +26,21 @@ services:
       dockerfile: Dockerfile_redis
     volumes:
       - "./redis-data/:/redis-data"
-    network_mode: "host"
 
-  ircdjs:
-    restart: always
-    build:
-      context: .
-      dockerfile: Dockerfile_ircdjs
-    ports:
-     - "6667:6667"
-  virtualsimo:
-    restart: always
-    build:
-      context: './virtual_private_simo/'
-    mem_limit: 4000000000
-    cpuset: '3'
-    cpu_quota: 50000
-    entrypoint: 'node index.js'
-    ports:
-      - "3500:3500"
+#  ircdjs:
+#    restart: always
+#    build:
+#      context: .
+#      dockerfile: Dockerfile_ircdjs
+#    ports:
+#     - "6667:6667"
+#  virtualsimo:
+#    restart: always
+#    build:
+#      context: './virtual_private_simo/'
+#    mem_limit: 4000000000
+#    cpuset: '3'
+#    cpu_quota: 50000
+#    entrypoint: 'node index.js'
+#    ports:
+#      - "3500:3500"

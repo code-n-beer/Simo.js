@@ -1,5 +1,11 @@
-authbind --deep mailin --webhook http://localhost/incoming_emails &
+#!/bin/bash
+
+#authbind --deep mailin --webhook http://localhost/incoming_emails &
 while [ 1 ]; do 
-  killall node;
+  echo "Kill dangling instances";
+  if pgrep node; then
+    kill -9 $(pgrep node||);
+  fi
+  echo "Starting new instance of SimoJS";
   node main.js;
 done
