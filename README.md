@@ -3,14 +3,14 @@ Simo.js
 
 Simo goes javascript
 
+### Running local development version
+- clone repo
+- remove .example postfix from settings files
+- uncomment ircdjs-server from docker-compose (only if you want to use local irc server)
+- run docker-compose up
 
-### Run npm install
+All logs are redirected to container stdouts so docker-compose logs <--follow> is your friend
 
-#### then:
+#### Feature development
 
 - See features/example.js
-
-- create a settings.json
-
-### Bretty guud irg-server
-https://www.npmjs.org/package/ircdjs
