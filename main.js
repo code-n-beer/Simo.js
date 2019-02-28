@@ -16,10 +16,9 @@ const TimerPoller = require('./lib/timerpoller').TimerPoller;
 const MultiCommand = require('./lib/multicommand').MultiCommand;
 const UrlTitle = require('./lib/urltitle').UrlTitle;
 
-var server, channel, nick, username, password, port;
 var config = {
     server: settings.general.server,
-    channel: settings.general.channel,
+    channels: settings.general.channels,
     botnick: settings.general.botnick,
     username: settings.general.username,
     password: settings.general.password,
@@ -34,7 +33,7 @@ var config = {
 var client = new irc.Client(config.server, config.botnick, {
     debug: true,
     showErrors: true,
-    channels: [config.channel],
+    channels: config.channels,
     port: config.port,
     autoConnect: true, 
     password: config.password,
@@ -144,6 +143,6 @@ client.addListener('message', function(from, to, message) {
 
 // Start twitter stream on connect
 setTimeout(
-    () => commands['!twitter'][0](client, config.channel, "startup", ""),
+    () => commands['!twitter'][0](client, config.channels[0], "startup", ""),
     3000);
 // ^ nice.
