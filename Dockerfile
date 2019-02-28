@@ -20,4 +20,4 @@ RUN usermod -u 1000 simobot
 RUN chown -R simobot:simobot /simobot
 RUN chown -R simobot:simobot /simobot/simojs-data/
 
-CMD ["./getMacros.sh", "&&", "./repeatSimo", ">>", "/simojs-data/nodelogs"]
+CMD ["sh", "-c", "./getMacros.sh && ./repeatSimo"]
