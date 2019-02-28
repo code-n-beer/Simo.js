@@ -2,7 +2,7 @@
     "general":
     {    
         "server": "localhost",
-        "channel": "#channel",
+        "channels": ["#channel"],
         "botnick": "BotName",
         "username": "name",
         "password": "",
