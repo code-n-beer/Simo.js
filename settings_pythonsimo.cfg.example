@@ -1,0 +1,28 @@
+[connection]
+server = localhost
+channel = #simon-hautuumaa
+botnick = SimoBot
+username = simobot
+password = password 
+port = 6667 
+
+
+[reittiopas]
+user = simobot
+pass = xxxxx 
+
+[twitter]
+OAUTH_TOKEN = xxxxxx 
+OAUTH_SECRET = xxxxxx
+CONSUMER_KEY = xxxxxx
+CONSUMER_SECRET = xxxxxx
+
+[lastfm]
+API_KEY = xxxxxx
+API_SECRET = xxxxxx 
+
+[expl]
+redishost = redis
+redisport = 6379
+redisdb = 2
+msglength = 380
