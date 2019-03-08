@@ -3,8 +3,6 @@ const irc = require('irc-upd');
 const fs = require('fs');
 const _ = require('underscore');
 const macroPath = __dirname + '/lib/macros.js'
-const macroFile = fs.readFileSync(macroPath);
-const macros = JSON.parse(macroFile)
 
 const features = require('./features/index.js').enabledFeatures;
 var commands = features.commands;
@@ -105,7 +103,8 @@ client.addListener('message', function(from, to, message) {
         // hypermacros
         if (~message.indexOf('!*')) {
             message = macrofy(message, 0)
-
+            const macroFile = fs.readFileSync(macroPath);
+            const macros = JSON.parse(macroFile)
             function macrofy(msg, depth) {
                 if (depth > 100) return "stack level too deep, giving up"
                 if (!~msg.indexOf('!*')) return msg
