@@ -9,6 +9,8 @@ build
 redis-data/
 lib/macros.js
 simojs-data/
+grafana_data/
+influxdb_data/
 ssh/id_rsa_nopasswd
 *.swp
 settings_pythonsimo.cfg
