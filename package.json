@@ -14,6 +14,7 @@
     "firebase": "2.3.0",
     "htmlparser2": "^3.9.0",
     "iconv-lite": "^0.4.13",
+    "influx": "^5.0.7",
     "irc-upd": "*",
     "line-reader": "*",
     "lodash": "4.17.4",
