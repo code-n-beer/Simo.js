@@ -104,7 +104,7 @@ client.addListener('message', function(from, to, message) {
         if (~message.indexOf('!*')) {
             message = macrofy(message, 0)
             const macroFile = fs.readFileSync(macroPath);
-            const macros = JSON.parse(macroFile)
+            macros = JSON.parse(macroFile)
             function macrofy(msg, depth) {
                 if (depth > 100) return "stack level too deep, giving up"
                 if (!~msg.indexOf('!*')) return msg
