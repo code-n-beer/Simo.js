@@ -3,6 +3,8 @@ const irc = require('irc-upd');
 const fs = require('fs');
 const _ = require('underscore');
 const macroPath = __dirname + '/lib/macros.js'
+const macroFile = fs.readFileSync(macroPath);
+const macros = JSON.parse(macroFile)
 
 const features = require('./features/index.js').enabledFeatures;
 var commands = features.commands;
@@ -12,7 +14,6 @@ var regexes = features.regexes;
 var settings = fs.readFileSync('./settings.json');
 settings = JSON.parse(settings);
 
-const TimerPoller = require('./lib/timerpoller').TimerPoller;
 const MultiCommand = require('./lib/multicommand').MultiCommand;
 const UrlTitle = require('./lib/urltitle').UrlTitle;
 
@@ -43,7 +44,7 @@ var client = new irc.Client(config.server, config.botnick, {
 });
 
 client.addListener('raw', function(message) {
-    console.log(message);
+    //console.log(message);
 });
 
 client.addListener('error', function(message) {
@@ -57,7 +58,6 @@ for (var init in inits) {
 }
 console.log("All features initialized");
 
-//const logger = require('./features/simoOnFire.js').loggingAction;
 var multicommand = new MultiCommand(commands, 100);
 var urltitle = new UrlTitle();
 
@@ -65,7 +65,6 @@ client.addListener('message', function(from, to, message) {
     //console.log("from: " + from);
     //console.log("to: " + to);
     //console.log("message: " + message);
-    //require('./features/simoOnFire.js').loggingAction(from, to, message, commands);
 
     var msg = message.toLowerCase();
     //In case of a query, send the msg to the querier instead of ourselves
@@ -105,8 +104,6 @@ client.addListener('message', function(from, to, message) {
 
         // hypermacros
         if (~message.indexOf('!*')) {
-            const macroFile = fs.readFileSync(macroPath);
-            macros = JSON.parse(macroFile);
             message = macrofy(message, 0)
 
             function macrofy(msg, depth) {
@@ -136,10 +133,6 @@ client.addListener('message', function(from, to, message) {
         console.log(err);
     }
 });
-
-//client.connect(function() {
-//    new TimerPoller(client, 30);
-//});
 
 // Start twitter stream on connect
 setTimeout(
