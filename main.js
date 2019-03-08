@@ -102,9 +102,9 @@ client.addListener('message', function(from, to, message) {
 
         // hypermacros
         if (~message.indexOf('!*')) {
-            message = macrofy(message, 0)
             const macroFile = fs.readFileSync(macroPath);
-            macros = JSON.parse(macroFile)
+            macros = JSON.parse(macroFile);
+            message = macrofy(message, 0);
             function macrofy(msg, depth) {
                 if (depth > 100) return "stack level too deep, giving up"
                 if (!~msg.indexOf('!*')) return msg
