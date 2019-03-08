@@ -13,6 +13,7 @@ services:
     links:
      - redis
      - pythonsimo
+     - influxdb
     volumes:
       - "./simojs-data/:/simojs-data"
     restart: always
@@ -27,13 +28,29 @@ services:
     volumes:
       - "./redis-data/:/redis-data"
 
-#  ircdjs:
-#    restart: always
-#    build:
-#      context: .
-#      dockerfile: Dockerfile_ircdjs
-#    ports:
-#     - "6667:6667"
+  influxdb:
+    image: influxdb:latest
+    container_name: influxdb
+    volumes:
+      - "./influxdb_data:/var/lib/influxdb"
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    links:
+      - influxdb
+    volumes:
+      - "./grafana_data:/var/lib/grafana"
+
+# ircdjs:
+#   restart: always
+#   build:
+#     context: .
+#     dockerfile: Dockerfile_ircdjs
+#   ports:
+#    - "6667:6667"
 #  virtualsimo:
 #    restart: always
 #    build:
