@@ -20,8 +20,11 @@ CONSUMER_SECRET = xxxxxx
 [lastfm]
 API_KEY = xxxxxx
 API_SECRET = xxxxxx 
+redisdb = 1
+
+[expl]
+redisdb = 2
 
 [redis]
 redishost = redis
 redisport = 6379
-redisdb = 2
