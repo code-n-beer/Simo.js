@@ -19,6 +19,7 @@ services:
     restart: always
     ports:
      - "8123:8123"
+     - "127.0.0.1:9229:9229"
 
   redis:
     restart: always

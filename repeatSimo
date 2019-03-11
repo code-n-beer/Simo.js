@@ -7,5 +7,5 @@ while [ 1 ]; do
     kill -9 $(pgrep node||);
   fi
   echo "Starting new instance of SimoJS";
-  node main.js;
+  node --inspect main.js;
 done
