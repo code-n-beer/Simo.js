@@ -12,6 +12,7 @@ var regexes = features.regexes;
 var settings = fs.readFileSync('./settings.json');
 settings = JSON.parse(settings);
 
+const TimerPoller = require('./lib/timerpoller').TimerPoller;
 const MultiCommand = require('./lib/multicommand').MultiCommand;
 const UrlTitle = require('./lib/urltitle').UrlTitle;
 
@@ -131,6 +132,10 @@ client.addListener('message', function(from, to, message) {
     } catch (err) {
         console.log(err);
     }
+});
+
+client.connect(function() {
+   new TimerPoller(client, 30);
 });
 
 // Start twitter stream on connect
