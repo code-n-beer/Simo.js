@@ -16,6 +16,8 @@ const TimerPoller = require('./lib/timerpoller').TimerPoller;
 const MultiCommand = require('./lib/multicommand').MultiCommand;
 const UrlTitle = require('./lib/urltitle').UrlTitle;
 
+const sendMetric = require('./lib/simoInflux').sendMetric;
+
 var config = {
     server: settings.general.server,
     channels: settings.general.channels,
@@ -98,6 +100,10 @@ client.addListener('message', function(from, to, message) {
             });
             message = `!*r ${to} ${from} ${message}`
         } else {
+            messageParts = message.split(" ");
+            if (messageParts.length === 2) {
+                sendMetric("macro_invocation", messageParts[1], "user:" + from + ",macro:" + messageParts[0]);
+            }
             message = `!*c ${to} ${from} ${message}`
         }
 
