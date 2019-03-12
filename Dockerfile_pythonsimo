@@ -2,9 +2,6 @@ FROM python:2.7-alpine
 
 RUN apk --no-cache --update add git
 
-# Disables caching for following commands
-RUN echo $(date +"%T") > /tmp/bustcache
-
 RUN git clone https://github.com/code-n-beer/SimoBotPython /pythonsimo
 WORKDIR /pythonsimo
 
