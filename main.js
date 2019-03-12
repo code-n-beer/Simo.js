@@ -89,7 +89,6 @@ client.addListener('message', function(from, to, message) {
         console.log(err);
     }
     try {
-
         if (msg.indexOf('!') !== 0) {
             console.log('going to call urltitle')
             urltitle.getTitle(message, function(title) {
@@ -100,10 +99,13 @@ client.addListener('message', function(from, to, message) {
             });
             message = `!*r ${to} ${from} ${message}`
         } else {
-            messageParts = message.split(" ");
+            const messageParts = message.split(" ");
+            let value = 0;
             if (messageParts.length === 2) {
-                sendMetric("macro_invocation", messageParts[1], "user:" + from + ",macro:" + messageParts[0]);
+                value = messageParts[1];
             }
+            sendMetric("macro_invocation", value, "user:" + from + ",macro:" + messageParts[0]);
+
             message = `!*c ${to} ${from} ${message}`
         }
 
