@@ -45,6 +45,15 @@ services:
     volumes:
       - "./grafana_data:/var/lib/grafana"
 
+  telegraf:
+    build:
+      context: .
+      dockerfile: Dockerfile_telegraf
+    container_name: telegraf
+    links:
+      - influxdb
+      - redis
+
 # ircdjs:
 #   restart: always
 #   build:
