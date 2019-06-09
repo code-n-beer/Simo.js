@@ -1,4 +1,3 @@
-#FROM python:2.7-alpine
 FROM glavin001/alpine-python2-numpy-scipy
 
 RUN apk --no-cache --update add git build-base

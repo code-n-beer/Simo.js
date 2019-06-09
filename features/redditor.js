@@ -15,6 +15,9 @@ var reddit = function(client, channel, from, line) {
             response = JSON.parse(body);
             var count = 1;
             var topPost = response.data.children[count];
+            if (!topPost) {
+                return;
+            }
             var topPostImg = topPost.data.url;
 
             while (seen.indexOf(topPostImg) !== -1) {
