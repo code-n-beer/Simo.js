@@ -2,14 +2,14 @@ const irc = require('irc-upd');
 
 const fs = require('fs');
 const _ = require('underscore');
-const macroPath = __dirname + '/lib/macros.js'
+const macroPath = '/simojs-data/macros.js'
 
 const features = require('./features/index.js').enabledFeatures;
 var commands = features.commands;
 var inits = features.inits;
 var regexes = features.regexes;
 
-var settings = fs.readFileSync('./settings.json');
+var settings = fs.readFileSync('/simojs-data/settings.json');
 settings = JSON.parse(settings);
 
 const TimerPoller = require('./lib/timerpoller').TimerPoller;
@@ -46,7 +46,7 @@ var client = new irc.Client(config.server, config.botnick, {
 });
 
 client.addListener('raw', function(message) {
-    //console.log(message);
+    console.log(message);
 });
 
 client.addListener('error', function(message) {

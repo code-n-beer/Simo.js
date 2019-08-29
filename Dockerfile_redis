@@ -4,4 +4,6 @@ ADD redis.conf /etc/redis/redis.conf
 RUN cat /etc/redis/redis.conf
 EXPOSE 6379
 
+USER 1000
+
 CMD ["redis-server", "/etc/redis/redis.conf"]

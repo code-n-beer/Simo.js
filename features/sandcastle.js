@@ -5,12 +5,12 @@ app.listen(8123, function() {
 })
 const SandCastle = require('sandcastle').SandCastle;
 const fs = require('fs');
-var macroPath = __dirname + '/../lib/macros.js';
+var macroPath = '/simojs-data/macros.js';
 const concat = require('../lib/concat.js');
 var sbox = new SandCastle({
     cwd: __dirname,
     api: __dirname + '/../lib/api.js',
-    memoryLimitMB: 1000,
+    memoryLimitMB: 128,
     timeout: 10000,
 });
 

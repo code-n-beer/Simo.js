@@ -10,7 +10,7 @@ COPY settings_pythonsimo.cfg /pythonsimo/Resources/settings.cfg
 
 COPY LightweightApi.py /pythonsimo/
 
-COPY pythonsimo-data/word2vec* /pythonsimo/Resources/
+COPY pythonsimo-data/w2v* /pythonsimo/Resources/
 
 EXPOSE 8888
 CMD python main.py
