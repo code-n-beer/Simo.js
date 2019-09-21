@@ -14,6 +14,7 @@ services:
      - redis
      - pythonsimo
      - influxdb
+     - lemmatizer
     volumes:
       - "./simojs-data/:/simojs-data"
     restart: always
@@ -34,6 +35,12 @@ services:
     container_name: influxdb
     volumes:
       - "./influxdb_data:/var/lib/influxdb"
+
+  lemmatizer:
+    image: turkunlp/turku-neural-parser:latest-fi-en-sv-cpu
+    container_name: lemmatizer
+    ports:
+      - "127.0.0.1:15000:7589"
 
   grafana:
     image: grafana/grafana:latest
