@@ -1,8 +1,11 @@
-FROM alpine:3.4
+#FROM alpine:edge
+#FROM mhart/alpine-node:10
+FROM node:10-alpine3.11
 
-RUN echo http://dl-2.alpinelinux.org/alpine/edge/community/ >> /etc/apk/repositories
-
-RUN apk add --no-cache icu-dev nodejs python make g++ openssh shadow bash
+RUN apk upgrade -U -a
+RUN apk add --update --no-cache util-linux util-linux-dev icu-dev python make g++ openssh shadow bash glib glib-dev pango expat expat-dev util-linux-dev gcc make libc6-compat vips-dev fftw-dev build-base \ 
+        --repository http://dl-cdn.alpinelinux.org/alpine/edge/community \
+        --repository http://dl-cdn.alpinelinux.org/alpine/edge/main
 
 RUN adduser -D simobot
 
@@ -14,10 +17,13 @@ ADD ./package.json /simobot/
 WORKDIR /simobot
 RUN npm install
 
-ADD ./ /simobot/
+ADD ./addHost.sh /simobot/
+ADD ./repeatSimo /simobot/
+ADD ./lib /simobot/lib
+ADD ./features /simobot/features
+ADD ./main.js /simobot/
 
-RUN usermod -u 1000 simobot
+#RUN usermod -u 1000 simobot
 RUN chown -R simobot:simobot /simobot
-RUN chown -R simobot:simobot /simobot/simojs-data/
 
 CMD ["sh", "-c", "./addHost.sh && ./repeatSimo"]

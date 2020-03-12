@@ -14,3 +14,6 @@ influxdb_data/
 ssh/id_rsa_nopasswd
 *.swp
 settings_pythonsimo.cfg
+marker
+pybase
+pythonsimo-data

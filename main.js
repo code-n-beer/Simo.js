@@ -15,7 +15,6 @@ settings = JSON.parse(settings);
 const TimerPoller = require('./lib/timerpoller').TimerPoller;
 const MultiCommand = require('./lib/multicommand').MultiCommand;
 const UrlTitle = require('./lib/urltitle').UrlTitle;
-const addToLogs = require('./lib/logger').addQuery
 
 const sendMetric = require('./lib/simoInflux').sendMetric;
 
@@ -41,6 +40,7 @@ var client = new irc.Client(config.server, config.botnick, {
     autoConnect: true, 
     password: config.password,
     userName: config.username,
+    realName: 'Simo Simonen',
     millisecondsOfSilenceBeforePingSent: 30 * 1000,
     millisecondsBeforePingTimeout: 15 * 1000
 });
@@ -69,14 +69,6 @@ client.addListener('message', function(from, to, message) {
     //console.log("message: " + message);
 
     var msg = message.toLowerCase();
-    try {
-        addToLogs(to, from, message, err => {
-            console.log("Logging error", err)
-        })
-    }
-    catch(e) {
-        console.log("Logging crashed", e)
-    }
     //In case of a query, send the msg to the querier instead of ourselves
     if (to.indexOf("#") === -1) {
         to = from;
@@ -106,18 +98,27 @@ client.addListener('message', function(from, to, message) {
             });
             message = `!*r ${to} ${from} ${message}`
         } else {
+	    console.log('tryna build msg')
             const messageParts = message.split(" ");
             let value = 0;
             if (messageParts.length === 2) {
                 value = messageParts[1];
             }
-            sendMetric("macro_invocation", value, "user:" + from + ",macro:" + messageParts[0]);
+	    try {
+		    sendMetric("macro_invocation", value, "user:" + from + ",macro:" + messageParts[0]);
+	    }
+	    catch(err){
+		    console.log('sendmetric on särki')
+	    }
 
+
+	    console.log('buildered msg')
             message = `!*c ${to} ${from} ${message}`
         }
 
         // hypermacros
         if (~message.indexOf('!*')) {
+	    console.log('hyper markoing')
             const macroFile = fs.readFileSync(macroPath);
             macros = JSON.parse(macroFile);
             message = macrofy(message, 0);
@@ -138,13 +139,17 @@ client.addListener('message', function(from, to, message) {
             }
         }
 
+        console.log('tryna multi komand for msg', msg)
         multicommand.exec(to, from, message, function(result) {
+	    console.log('multicommanding returded for msg', msg)
+	    console.log('multicommanding returded for result', result)
             if (!result)
                 return;
             client.say(to, result);
         });
 
     } catch (err) {
+	console.log('koko paska levisi :)')
         console.log(err);
     }
 });

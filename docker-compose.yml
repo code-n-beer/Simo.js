@@ -4,6 +4,8 @@ services:
     build: 
       context: .
       dockerfile: Dockerfile_pythonsimo
+    volumes:
+      - "./simojs-data/:/simojs-data"
     links:
       - redis
     restart: always
@@ -14,7 +16,7 @@ services:
      - redis
      - pythonsimo
      - influxdb
-     - lemmatizer
+       #     - lemmatizer
     volumes:
       - "./simojs-data/:/simojs-data"
     restart: always
@@ -36,12 +38,12 @@ services:
     volumes:
       - "./influxdb_data:/var/lib/influxdb"
 
-  lemmatizer:
-    image: turkunlp/turku-neural-parser:latest-fi-en-sv-cpu
-    container_name: lemmatizer
-    ports:
-      - "127.0.0.1:15000:7689"
-    command: "server fi_tdt parse_plaintext"
+        #  lemmatizer:
+        #    image: turkunlp/turku-neural-parser:latest-fi-en-sv-cpu
+        #    container_name: lemmatizer
+        #    ports:
+        #      - "127.0.0.1:15000:7689"
+        #    command: "server fi_tdt parse_plaintext"
 
   grafana:
     image: grafana/grafana:latest

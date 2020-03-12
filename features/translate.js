@@ -3,7 +3,7 @@ const request = require('request'),
     parseXML = require('xml2js').parseString,
     _ = require('underscore'),
     fs = require('fs'),
-    settings = JSON.parse(fs.readFileSync('./settings.json')),
+    settings = JSON.parse(fs.readFileSync('/simojs-data/settings.json')),
     auth_data = {
         grant_type: settings.translator.grant_type,
         client_id: settings.translator.client_id,
