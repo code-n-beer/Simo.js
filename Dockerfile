@@ -1,12 +1,9 @@
-FROM alpine:3.4
+FROM debian:10
 
-RUN echo http://dl-2.alpinelinux.org/alpine/edge/community/ >> /etc/apk/repositories
+RUN apt-get update && apt-get install -y libicu-dev nodejs npm python make g++ openssh-client bash
 
-RUN apk add --no-cache icu-dev nodejs python make g++ openssh shadow bash
+RUN adduser --disabled-password simobot
 
-RUN adduser -D simobot
-
-RUN apk add --update tzdata
 ENV TZ=Europe/Helsinki
 
 RUN mkdir /simobot
