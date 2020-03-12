@@ -1,3 +1,4 @@
+import api from '../lib/api'
 const express = require('express')
 const app = express()
 app.listen(8123, function() {
@@ -20,12 +21,27 @@ var init = function(config) {
     macros = JSON.parse(macroFile);
 }
 
+const {NodeVM} = require('vm2');
+
+const vm = new NodeVM({
+    console: 'inherit',
+    sandbox: api,
+    require: {
+        external: true,
+        root: "./",
+        mock: {
+            fs: {
+                readFileSync() { return 'Nice try!'; }
+            }
+        }
+    }
+});
+
 var run = function(client, channel, from, line) {
 
     const runScript = (line) => {
-        var script = sbox.createScript("exports.main = function() {" + line + "}");
-
-        script.on('exit', function(err, output) {
+        const fnSandbox = vm.run("module.exports = function() {" + line + "}");
+        fnSandbox('', results => {
             console.log('err: ' + err);
             console.log('output: ' + output);
             if (!err) {
@@ -43,15 +59,8 @@ var run = function(client, channel, from, line) {
                 res = err.toString();
                 client.say(channel, res);
             }
-        });
-        script.on('timeout', function() {
-            console.log('script timed out');
-            client.say(channel, 'script timed out');
-        });
+        })
 
-        script.run({
-            arg: lineArr.join(" ")
-        });
     }
 
     line = line.substring('!run '.length);

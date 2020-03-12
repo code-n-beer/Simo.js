@@ -33,6 +33,7 @@
     "underscore": "*",
     "usage": "*",
     "user-stream": "*",
+    "vm2": "^3.8.4",
     "xml2js": "*"
   }
 }
