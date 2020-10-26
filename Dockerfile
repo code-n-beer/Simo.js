@@ -1,12 +1,19 @@
-FROM alpine:3.4
+FROM debian:10
 
-RUN echo http://dl-2.alpinelinux.org/alpine/edge/community/ >> /etc/apk/repositories
+RUN apt-get update && apt-get install -y libicu-dev nodejs npm python make g++ openssh-client bash curl
 
-RUN apk add --no-cache icu-dev nodejs python make g++ openssh shadow bash
+#RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.35.3/install.sh | bash
+ENV NVM_DIR /usr/local/nvm
+RUN curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.33.1/install.sh | bash
 
-RUN adduser -D simobot
+ENV NODE_VERSION v8.17.0
+RUN /bin/bash -c "source $NVM_DIR/nvm.sh && nvm install $NODE_VERSION && nvm use --delete-prefix $NODE_VERSION"
 
-RUN apk add --update tzdata
+ENV NODE_PATH $NVM_DIR/versions/node/$NODE_VERSION/lib/node_modules
+ENV PATH      $NVM_DIR/versions/node/$NODE_VERSION/bin:$PATH
+
+RUN adduser --disabled-password simobot
+
 ENV TZ=Europe/Helsinki
 
 RUN mkdir /simobot
