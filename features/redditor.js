@@ -8,7 +8,6 @@ var reddit = function(client, channel, from, line) {
         sub = line.split(" ")[1];
     } catch (err) {}
     var url = "http://www.reddit.com/r/" + sub + "/hot.json?sort=new";
-    var response;
 
     request(url, function(error, response, body) {
         if (!error && response.statusCode == 200) {
@@ -18,18 +17,18 @@ var reddit = function(client, channel, from, line) {
             if (!topPost) {
                 return;
             }
-            var topPostImg = topPost.data.url;
+            var topPostURL = topPost.data.url;
 
-            while (seen.indexOf(topPostImg) !== -1) {
+            while (seen.indexOf(topPostURL) !== -1 || topPost.pinned) {
                 topPost = response.data.children[count];
-                topPostImg = topPost.data.url;
+                topPostURL = topPost.data.url;
                 count++;
             }
 
-            seen.push(topPostImg);
-            console.log(seen);
+            seen.push(topPostURL);
+            //console.log(seen);
 
-            client.say(channel, topPostImg);
+            client.say(channel, topPostURL);
         }
     });
 }
