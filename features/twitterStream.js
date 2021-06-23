@@ -1,7 +1,7 @@
 const Stream = require('user-stream');
 
 const fs = require('fs');
-var settings = fs.readFileSync('./settings.json');
+var settings = fs.readFileSync('/simojs-data/settings.json');
 settings = JSON.parse(settings);
 
 var stream;

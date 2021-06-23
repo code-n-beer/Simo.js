@@ -1,0 +1,17 @@
+version: '2'
+services:
+  mlsimo:
+    build: 
+      context: .
+      dockerfile: Dockerfile_mlsimo
+    expose:
+      - "8000"
+    ports:
+      - "8765:8000"
+    restart: always
+    volumes:
+      - "./mlsimo-data/:/mlsimo-data"
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - HF_HOME=/mlsimo-data/
+    runtime: nvidia

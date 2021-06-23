@@ -1,0 +1,4 @@
+shortuuid
+flask
+transformers
+gunicorn

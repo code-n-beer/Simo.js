@@ -42,7 +42,7 @@ var client = new irc.Client(config.server, config.botnick, {
     password: config.password,
     userName: config.username,
     millisecondsOfSilenceBeforePingSent: 30 * 1000,
-    millisecondsBeforePingTimeout: 15 * 1000
+    millisecondsBeforePingTimeout: 120 * 1000
 });
 
 client.addListener('raw', function(message) {
