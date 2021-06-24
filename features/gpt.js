@@ -1,12 +1,5 @@
 const axios = require('axios');
 
-function fixResult(r) {
-    let result = Object.assign({}, r.data)
-    result.output = result.output.replace('\n', '|').substr(0, 300)
-    result.filename = 'http://gpt.prototyping.xyz/' + result.filename
-    return result
-}
-
 var gpt = function(client, channel, from, line) {
 	var url = "http://ml-simo:8765/gpt";
 

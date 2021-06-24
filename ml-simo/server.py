@@ -34,6 +34,12 @@ def write_to_file(input_str):
     text_file.write(input_str)
     
   return filename
+
+def wrap_pre(result_str):
+    if "<html>" in result_str.lower():
+        return result_str
+    else:
+        return "<pre>\n" + result_str + "\n</pre>"
     
 
 def gen(prompt, bad_words, settings):
@@ -49,6 +55,7 @@ def gen(prompt, bad_words, settings):
     ebun = generator(prompt, **settings)
 
   output = ebun[0]['generated_text']
+  output = wrap_pre(output)
   filename = write_to_file(output)
 
   return filename, output
