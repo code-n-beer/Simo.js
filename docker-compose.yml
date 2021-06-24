@@ -1,5 +1,23 @@
 version: '2'
 services:
+
+  ml-simo:
+    build: 
+      dockerfile: Dockerfile_mlsimo
+      context: ./ml-simo/
+    expose:
+      - "8765"
+    ports:
+      - "8765:8765"
+    restart: always
+    volumes:
+      - "./ml-simo/mlsimo-data/:/mlsimo-data"
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - HF_HOME=/mlsimo-data/
+    runtime: nvidia
+    entrypoint: gunicorn -w 1 --bind=0.0.0.0:8765 --timeout 3000 server:app
+
   pythonsimo:
     build: 
       context: .
@@ -10,9 +28,11 @@ services:
       - redis
     restart: always
 
+
   simojs:
     build: .
     links:
+     - ml-simo
      - redis
      - pythonsimo
      - influxdb

@@ -26,6 +26,15 @@ if __name__ != '__main__':
 #   print('main, skip models')
 #   generator = None
 
+def write_to_file(input_str):
+  uuid = shortuuid.uuid()
+
+  filename = "%s.html" % uuid
+  with open('/mlsimo-data/output/' + filename, "w", encoding="utf8") as text_file:
+    text_file.write(input_str)
+    
+  return filename
+    
 
 def gen(prompt, bad_words, settings):
   if settings is None:
@@ -41,7 +50,6 @@ def gen(prompt, bad_words, settings):
 
   output = ebun[0]['generated_text']
   filename = write_to_file(output)
-  pprint(output)
 
   return filename, output
 
@@ -58,7 +66,6 @@ def add_message():
   prompt = content['prompt']
   bad_words = content['bad_words'] if 'bad_words' in content else None
   settings = content['settings'] if 'settings' in content else None
-  print(prompt)
 
   filename, output = gen(prompt, bad_words, settings)
 
@@ -70,11 +77,3 @@ def add_message():
 
   
 
-def write_to_file(str):
-  uuid = shortuuid.uuid()
-  filename = "%s.html" % uuid
-  with open(filename, "w") as text_file:
-    text_file.write("%s" % str)
-    
-  return filename
-    

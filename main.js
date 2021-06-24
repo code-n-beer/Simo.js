@@ -15,7 +15,6 @@ settings = JSON.parse(settings);
 const TimerPoller = require('./lib/timerpoller').TimerPoller;
 const MultiCommand = require('./lib/multicommand').MultiCommand;
 const UrlTitle = require('./lib/urltitle').UrlTitle;
-const addToLogs = require('./lib/logger').addQuery
 
 const sendMetric = require('./lib/simoInflux').sendMetric;
 
@@ -69,14 +68,6 @@ client.addListener('message', function(from, to, message) {
     //console.log("message: " + message);
 
     var msg = message.toLowerCase();
-    try {
-        addToLogs(to, from, message, err => {
-            console.log("Logging error", err)
-        })
-    }
-    catch(e) {
-        console.log("Logging crashed", e)
-    }
     //In case of a query, send the msg to the querier instead of ourselves
     if (to.indexOf("#") === -1) {
         to = from;

@@ -24,7 +24,7 @@ RUN npm install
 ADD ./ /simobot/
 
 RUN usermod -u 1000 simobot
-RUN chown -R simobot:simobot /simobot
-RUN chown -R simobot:simobot /simobot/simojs-data/
+#RUN chown -R simobot:simobot /simobot
+#RUN chown -R simobot:simobot /simobot/simojs-data/
 
 CMD ["sh", "-c", "./addHost.sh && ./repeatSimo"]
