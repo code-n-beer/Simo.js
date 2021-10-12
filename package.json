@@ -3,7 +3,6 @@
   "description": "SimoBot goes js",
   "author": "Tsarpf <tsarpf@gmail.com>",
   "dependencies": {
-    "anagram": "*",
     "async": "1.4.2",
     "axios": "^0.17.0",
     "base-64": "^0.1.0",
