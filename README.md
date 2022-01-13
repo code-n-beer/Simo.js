@@ -14,3 +14,6 @@ All logs are redirected to container stdouts so docker-compose logs <--follow> i
 #### Feature development
 
 - See features/example.js
+
+#### Project Management
+![](https://i.imgur.com/uJnLJcT.png)
