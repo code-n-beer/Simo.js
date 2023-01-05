@@ -14,6 +14,9 @@ let defaultHeaders = {
 	headers: authHeader
 }
 
+const resultAddr = `http://gpt.prototyping.xyz`
+const outputPath = `/simojs-data/html`
+
 function loopUntilReady(getUrl, say) {
 	let started = false;
 	let processing = false;
@@ -90,8 +93,6 @@ function generate(client, channel, from, line) {
 	const promptStuff = prompt.split(' ')[0].replace(/[^a-zA-Z0-9öäåÖÄÅ\-]+/g, '')
 	const filePromptSuffix = promptStuff.substring(0,10)
 	const resultFile = `${timestamp}--${filePromptSuffix}`
-	const filePath = `/simojs-data/html/${resultFile}`
-	const resultAddr = `http://gpt.prototyping.xyz`
 
 	let results = Array.from(Array(conf['num_outputs']).keys()).map(i => `${resultFile}_${i}.png`)
 	console.log('results', results)
@@ -108,7 +109,7 @@ function generate(client, channel, from, line) {
 			axios.get(url, {headers: authHeader, responseType: 'stream'}).then(response => {
 				console.log('fetching url', url, 'index', index)
 				const img = `${resultFile}_${index}.png`
-				const filePath = `/simojs-data/html/${img}`
+				const filePath = `${outputPath}/${img}`
 				const writer = fs.createWriteStream(filePath)
 				response.data.pipe(writer)
 				return new Promise((resolve, reject) => {
@@ -117,11 +118,6 @@ function generate(client, channel, from, line) {
 				})
 			})
 		))).then(results => {
-			//console.log('got results', results)
-			//let urls = results.map(img => `${resultAddr}/${img}`).join(' ')
-			//let msg = `${urls} ${prompt}`.substring(0, 300)
-			//console.log('sending to client: ', msg)
-			//client.say(channel, `Finished: ${prompt.substring(0,250)}`)
 			console.log('finished')
 		}).catch(e=>console.log(e) || client.say(channel, 'caught err', e))
 }
@@ -139,7 +135,7 @@ let dalleHeaders = {
 	headers: dalleAuth
 }
 
-function dalle(client, channel, from, line) {
+function parseDalleConf(line) {
 	const input = line.split(' ').slice(1).join(' ');
 
 	let [num, size, ...prompt] = input.split(' '); 
@@ -154,23 +150,15 @@ function dalle(client, channel, from, line) {
 
 	size = Math.min(1024, size)
 	conf.size = `${size}x${size}`
+	return conf
+}
 
-	console.log('conf', conf)
-
-	const timestamp = moment().format('YYYY-MM-DD_HH-mm-ss')
-	const promptStuff = prompt.split(' ')[0].replace(/[^a-zA-Z0-9öäåÖÄÅ\-]+/g, '')
-	const filePromptSuffix = promptStuff.substring(0,10)
-	const resultFile = `${timestamp}--${filePromptSuffix}`
-	const filePath = `/simojs-data/html/${resultFile}`
-	const resultAddr = `http://gpt.prototyping.xyz`
-
-
-	axios.post('https://api.openai.com/v1/images/generations', conf, dalleHeaders
-	).then(rr => Promise.all(rr.data.data.map((obj, index) =>
-		axios.get(obj.url, {responseType: 'stream'}).then(response => {
-			console.log('fetching url', obj.url, 'index', index)
+function downloadImages(urls, resultFile) {
+	return Promise.all(urls.map((url, index) =>
+		axios.get(url, {responseType: 'stream'}).then(response => {
+			console.log('fetching url', url, 'index', index)
 			const img = `${resultFile}_${index}.png`
-			const filePath = `/simojs-data/html/${img}`
+			const filePath = `${outputPath}/${img}`
 			const writer = fs.createWriteStream(filePath)
 			response.data.pipe(writer)
 			return new Promise((resolve, reject) => {
@@ -178,48 +166,101 @@ function dalle(client, channel, from, line) {
 				writer.on('error', reject)
 			})
 		})
-		))).then(results => {
-			//let results = Array.from(Array(conf['n']).keys()).map(i => `${resultFile}_${i}.png`)
-			console.log('results', results)
-			let urls = results.map(img => `${resultAddr}/${img}`).join(' ')
-			console.log('urls', urls)
-			let msg = `${urls} ${prompt}`.substring(0, 300)
-			console.log('sending to client: ', msg)
-			client.say(channel, msg)
+	))
+}
 
-			//console.log('got results', results)
-			//let urls = results.map(img => `${resultAddr}/${img}`).join(' ')
-			//let msg = `${urls} ${prompt}`.substring(0, 300)
-			//console.log('sending to client: ', msg)
-			//client.say(channel, `Finished: ${prompt.substring(0,250)}`)
-			console.log('finished')
-		}).catch(e=>console.log(e) || client.say(channel, 'caught err', e))
+function sayResults(prompt, results, say) {
+	//let results = Array.from(Array(conf['n']).keys()).map(i => `${resultFile}_${i}.png`)
+	console.log('results', results)
+	let urls = results.map(img => `${resultAddr}/${img}`).join(' ')
+	console.log('urls', urls)
+	let msg = `${urls} ${prompt}`.substring(0, 300)
+	console.log('sending to client: ', msg)
+	say(msg)
+	console.log('finished')
+}
+
+function dalle(client, channel, from, line) {
+	const conf = parseDalleConf(line)
+
+	console.log('conf', conf)
+
+	const timestamp = moment().format('YYYY-MM-DD_HH-mm-ss')
+	const promptStuff = prompt.split(' ')[0].replace(/[^a-zA-Z0-9öäåÖÄÅ\-]+/g, '')
+	const filePromptSuffix = promptStuff.substring(0,10)
+	const resultFile = `${timestamp}--${filePromptSuffix}`
+
+	axios.post('https://api.openai.com/v1/images/generations', conf, dalleHeaders)
+		.then(rr => downloadImages(rr.data.data.map(o => o.url), resultFile))
+		.then(results => sayResults(conf.prompt, results, msg => client.say(channel, msg)))
+		.catch(e=>console.log(e) || client.say(channel, `caught err: ${e}`))
 }
 
 
-//TODO: need to crop the image to square size first before openai API will accept it
-// function variations(client, channel, from, line) {
-// 	const input = line.split(' ').slice(1).join(' ');
-// 	let [num, size, ...prompt] = input.split(' '); 
-// 
-// 		axios.get(obj.url, {responseType: 'stream'}).then(response => {
-// 	const form = new FormData();
-// 	form.append('file', fs.readFileSync(filePath), fileName);
-// 
-// 	const config = {
-// 	  headers: {
-// 	    Authorization: `Bearer ${auth.access_token}`,
-// 	    ...form.getHeaders(),
-// 	  },
-// };
+const jimp = require('jimp');
+const FormData = require('form-data');
+function cropAndConvert(img, say) {
+	const fileName = moment().format('YYYY-MM-DD_HH-mm-ss')
+	const filePath = `/simojs-data/img-convert/${fileName}.png`
+	return jimp.read(img).then(image => {
+		let width = image.bitmap.width;
+		let height = image.bitmap.height;
+		let croppWidth = width > height ? height : width;
+		let startX = (width / 2) - (croppWidth / 2);
+		let startY = (height /2) - (croppWidth / 2);
 
-axios.post(api, form.getBuffer(), config);
+		return image.crop(startX,startY, croppWidth,croppWidth)
+		.quality(100) // set JPEG quality
+		.writeAsync(filePath) // save
+		.then(f => filePath)
+	}).catch(err => {
+		console.error(err);
+		say('jimp error', err);
+	});
 }
+
+const variationUrl = `https://api.openai.com/v1/images/variations`
+function variations(client, channel, from, line) {
+	const conf = parseDalleConf(line)
+
+	const url = conf.prompt
+	delete conf.prompt
+
+	const timestamp = moment().format('YYYY-MM-DD_HH-mm-ss')
+	const promptStuff = url.split('/').slice(-1)[0].replace(/[^a-zA-Z0-9öäåÖÄÅ\-]+/g, '')
+	const filePromptSuffix = promptStuff.substring(0,10)
+	const resultFile = `${timestamp}--${filePromptSuffix}`
+
+	axios.get(url, {responseType: 'arraybuffer'}).then(response =>
+		cropAndConvert(response.data, msg => client.say(channel, msg))
+	).then(filePath => {
+		const form = new FormData();
+		form.append('image', fs.readFileSync(filePath), 'someimg.png');
+
+		Object.keys(conf).forEach((key, index) => {
+			let val = conf[key];
+			form.append(key, val)
+		});
+		
+		const config = {
+		  headers: {
+			  Authorization: `Bearer ${dalleToken}`,
+			  ...form.getHeaders(),
+		  },
+		}
+
+		return axios.post(variationUrl, form, config)
+	})
+	.then(rr => downloadImages(rr.data.data.map(o => o.url), resultFile))
+	.then(results => sayResults(`variations of ${url}`, results, msg => client.say(channel, msg)))
+	.catch(e=>console.log(e) || client.say(channel, `caught err: ${e}`))
+};
 
 module.exports = {
     name: 'test', //not required atm iirc
     commands: {
-        //'!stablediffusion': generate,
+        '!stablediffusion': generate,
         '!dalle': dalle,
+	'!variation': variations,
     },
 }

@@ -32,6 +32,8 @@
     "underscore": "*",
     "usage": "*",
     "user-stream": "*",
-    "xml2js": "*"
+    "xml2js": "*",
+    "jimp": "^0.16.2",
+    "form-data": "^4.0.0"
   }
 }
