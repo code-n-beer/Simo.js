@@ -4,6 +4,7 @@ const axios = require('axios'),
     path = require('path');
 
 let token = JSON.parse(fs.readFileSync('simojs-data/settings.json')).stablediffusion.api_key
+let dalleToken = JSON.parse(fs.readFileSync('simojs-data/settings.json')).dalle.api_key
 
 let authHeader = {
 	Authorization: `Token ${token}`,
@@ -125,9 +126,100 @@ function generate(client, channel, from, line) {
 		}).catch(e=>console.log(e) || client.say(channel, 'caught err', e))
 }
 
+let dalleConfig = {
+	'size': '512x512',
+	'n': 4,
+}
+
+let dalleAuth = {
+	Authorization: `Bearer ${dalleToken}`,
+	'Content-Type':'application/json'
+}
+let dalleHeaders = {
+	headers: dalleAuth
+}
+
+function dalle(client, channel, from, line) {
+	const input = line.split(' ').slice(1).join(' ');
+
+	let [num, size, ...prompt] = input.split(' '); 
+	prompt = prompt.join(' ')
+	console.log('prompt', prompt)
+
+	console.log('using dalle auth', dalleAuth)
+
+	let conf = Object.assign({}, dalleConfig)
+	conf['n'] = Math.min(4, num)
+	conf.prompt = prompt
+
+	size = Math.min(1024, size)
+	conf.size = `${size}x${size}`
+
+	console.log('conf', conf)
+
+	const timestamp = moment().format('YYYY-MM-DD_HH-mm-ss')
+	const promptStuff = prompt.split(' ')[0].replace(/[^a-zA-Z0-9öäåÖÄÅ\-]+/g, '')
+	const filePromptSuffix = promptStuff.substring(0,10)
+	const resultFile = `${timestamp}--${filePromptSuffix}`
+	const filePath = `/simojs-data/html/${resultFile}`
+	const resultAddr = `http://gpt.prototyping.xyz`
+
+
+	axios.post('https://api.openai.com/v1/images/generations', conf, dalleHeaders
+	).then(rr => Promise.all(rr.data.data.map((obj, index) =>
+		axios.get(obj.url, {responseType: 'stream'}).then(response => {
+			console.log('fetching url', obj.url, 'index', index)
+			const img = `${resultFile}_${index}.png`
+			const filePath = `/simojs-data/html/${img}`
+			const writer = fs.createWriteStream(filePath)
+			response.data.pipe(writer)
+			return new Promise((resolve, reject) => {
+				writer.on('finish', resolve(img))
+				writer.on('error', reject)
+			})
+		})
+		))).then(results => {
+			//let results = Array.from(Array(conf['n']).keys()).map(i => `${resultFile}_${i}.png`)
+			console.log('results', results)
+			let urls = results.map(img => `${resultAddr}/${img}`).join(' ')
+			console.log('urls', urls)
+			let msg = `${urls} ${prompt}`.substring(0, 300)
+			console.log('sending to client: ', msg)
+			client.say(channel, msg)
+
+			//console.log('got results', results)
+			//let urls = results.map(img => `${resultAddr}/${img}`).join(' ')
+			//let msg = `${urls} ${prompt}`.substring(0, 300)
+			//console.log('sending to client: ', msg)
+			//client.say(channel, `Finished: ${prompt.substring(0,250)}`)
+			console.log('finished')
+		}).catch(e=>console.log(e) || client.say(channel, 'caught err', e))
+}
+
+
+//TODO: need to crop the image to square size first before openai API will accept it
+// function variations(client, channel, from, line) {
+// 	const input = line.split(' ').slice(1).join(' ');
+// 	let [num, size, ...prompt] = input.split(' '); 
+// 
+// 		axios.get(obj.url, {responseType: 'stream'}).then(response => {
+// 	const form = new FormData();
+// 	form.append('file', fs.readFileSync(filePath), fileName);
+// 
+// 	const config = {
+// 	  headers: {
+// 	    Authorization: `Bearer ${auth.access_token}`,
+// 	    ...form.getHeaders(),
+// 	  },
+// };
+
+axios.post(api, form.getBuffer(), config);
+}
+
 module.exports = {
     name: 'test', //not required atm iirc
     commands: {
-        '!stablediffusion': generate,
+        //'!stablediffusion': generate,
+        '!dalle': dalle,
     },
 }
