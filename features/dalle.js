@@ -3,7 +3,7 @@ const axios = require('axios'),
     moment = require('moment'),
     path = require('path');
 
-let token = JSON.parse(fs.readFileSync('simojs-data/settings.json')).stablediffusion.api_key
+let token = JSON.parse(fs.readFileSync('simojs-data/settings.json')).stablediffusionReplicate.api_key
 let dalleToken = JSON.parse(fs.readFileSync('simojs-data/settings.json')).dalle.api_key
 
 let authHeader = {
@@ -186,7 +186,7 @@ function dalle(client, channel, from, line) {
 	console.log('conf', conf)
 
 	const timestamp = moment().format('YYYY-MM-DD_HH-mm-ss')
-	const promptStuff = prompt.split(' ')[0].replace(/[^a-zA-Z0-9öäåÖÄÅ\-]+/g, '')
+	const promptStuff = conf.prompt.split(' ')[0].replace(/[^a-zA-Z0-9öäåÖÄÅ\-]+/g, '')
 	const filePromptSuffix = promptStuff.substring(0,10)
 	const resultFile = `${timestamp}--${filePromptSuffix}`
 
@@ -259,7 +259,7 @@ function variations(client, channel, from, line) {
 module.exports = {
     name: 'test', //not required atm iirc
     commands: {
-        '!stablediffusion': generate,
+        //'!stablediffusion': generate,
         '!dalle': dalle,
 	'!variation': variations,
     },

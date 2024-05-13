@@ -1,23 +1,6 @@
 version: '2'
 services:
 
-        #ml-simo:
-        #  build: 
-        #    dockerfile: Dockerfile_mlsimo
-        #    context: ./ml-simo/
-        #  expose:
-        #    - "8765"
-        #  ports:
-        #    - "8765:8765"
-        #  restart: always
-        #  volumes:
-        #    - "./ml-simo/mlsimo-data/:/mlsimo-data"
-        #  environment:
-        #    - NVIDIA_VISIBLE_DEVICES=all
-        #    - HF_HOME=/mlsimo-data/
-        #  runtime: nvidia
-        #  entrypoint: gunicorn -w 1 --bind=0.0.0.0:8765 --timeout 3000 server:app
-
   pythonsimo:
     build: 
       context: .
@@ -30,19 +13,29 @@ services:
 
 
   simojs:
-    build: .
     links:
-            #- ml-simo
      - redis
      - pythonsimo
      - influxdb
-       # - lemmatizer
+     - llama
+    build: .
     volumes:
       - "./simojs-data/:/simojs-data"
     restart: always
     ports:
      - "8123:8123"
      - "127.0.0.1:9229:9229"
+
+  llama:  
+    image: ghcr.io/ggerganov/llama.cpp:server
+    command: -m /models/llamafi-combo-1k-Q5_1.gguf -c 128 --host 0.0.0.0 --port 8111 --threads 8 --mlock
+    #command: -m /models/finnish-llama2-v0.2-Q5_1.gguf -c 128 --host 0.0.0.0 --port 8111 --threads 8 --mlock
+    volumes:
+      - "./models:/models"
+    ports:
+      - "8111:8111"
+    restart: always
+
 
   redis:
     restart: always
@@ -58,48 +51,25 @@ services:
     volumes:
       - "./influxdb_data:/var/lib/influxdb"
 
-#  lemmatizer:
-#    image: turkunlp/turku-neural-parser:latest-fi-en-sv-cpu
-#    container_name: lemmatizer
-#    ports:
-#      - "127.0.0.1:15000:7689"
-#    command: "server fi_tdt parse_plaintext"
-
-#  grafana:
-#    image: grafana/grafana:latest
-#    container_name: grafana
-#    environment:
-#      - "GF_SERVER_ROOT_URL=http://grafana.prototyping.xyz"
-#    ports:
-#      - "127.0.0.1:3000:3000"
-#    links:
-#      - influxdb
-#    volumes:
-#      - "./grafana_data:/var/lib/grafana"
-
-#  telegraf:
-#    build:
-#      context: .
-#      dockerfile: Dockerfile_telegraf
-#    container_name: telegraf
-#    links:
-#      - influxdb
-#      - redis
-
-# ircdjs:
-#   restart: always
-#   build:
-#     context: .
-#     dockerfile: Dockerfile_ircdjs
+# GPU llama
+# llama:  # Service name acts as hostname within the network
+#   image: ghcr.io/ggerganov/llama.cpp:server-cuda
+#   command: -m /models/llamafi-combo-1k-Q5_1.gguf -c 256 --host 0.0.0.0 --port 8111 --threads 8 --mlock --n-gpu-layers 99
+#   #command: -m /models/finnish-llama2-v0.2-Q5_1.gguf -c 128 --host 0.0.0.0 --port 8111 --threads 8 --mlock
+#   volumes:
+#     - "./models:/models"  # Adjust this according to your actual models directory
 #   ports:
-#    - "6667:6667"
-#  virtualsimo:
-#    restart: always
-#    build:
-#      context: './virtual_private_simo/'
-#    mem_limit: 4000000000
-#    cpuset: '3'
-#    cpu_quota: 50000
-#    entrypoint: 'node index.js'
-#    ports:
-#      - "3500:3500"
+#     - "8111:8111"
+#   restart: always
+#   deploy:
+#     resources:
+#       reservations:
+#         devices:
+#           - driver: nvidia
+#             count: 1
+#             capabilities: [gpu]
+#       limits:
+#         memory: 8G
+#   memswap_limit: 8G
+#   environment:
+#       - NVIDIA_VISIBLE_DEVICES=all

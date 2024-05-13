@@ -6,3 +6,5 @@ simojs-data
 redis-data
 pythonsimo-data
 lib/macros.js
+models/
+gigo/
