@@ -69,18 +69,23 @@ async function startStreamingResponse(prompt, client, channel) {
         // Read template file
         let htmlContent;
         try {
-            htmlContent = fs.readFileSync(HTML_TEMPLATE_PATH, 'utf8');
+            // Read the template file
+            const templatePath = path.resolve(__dirname, HTML_TEMPLATE_PATH);
+            console.log(`Reading template from: ${templatePath}`);
+            htmlContent = fs.readFileSync(templatePath, 'utf8');
+            console.log('Successfully read template file');
         } catch (err) {
             console.error(`Error reading template file (${HTML_TEMPLATE_PATH}):`, err);
             // Fallback to a basic template if file read fails
             htmlContent = `<!DOCTYPE html><html><head><title>Streaming Response</title><style>body{font-family:monospace;white-space:pre-wrap;padding:20px;}</style></head><body><div id="content"></div><script>setInterval(()=>fetch(window.location.href.replace(/\.html$/,'.txt')).then(r=>r.text()).then(t=>document.getElementById('content').textContent=t),100)</script></body></html>`;
+            console.log('Using fallback template');
         }
         
         // Write files
         fs.writeFileSync(htmlPath, htmlContent);
         fs.writeFileSync(txtPath, '');
         
-        console.log(`Successfully created files`);
+        console.log(`Successfully created files at ${htmlPath} and ${txtPath}`);
         
         const resultUrl = `http://gpt.prototyping.xyz/${htmlFile}`;
         console.log(`Result URL: ${resultUrl}`);
@@ -94,15 +99,6 @@ async function startStreamingResponse(prompt, client, channel) {
         console.error('Error in startStreamingResponse:', error);
         throw error;
     }
-    
-    // Send the URL immediately
-    client.say(channel, `${resultUrl} (Streaming response started...)`);
-    
-    return {
-        htmlPath: `/simojs-data/html/${htmlFile}`,
-        txtPath: `/simojs-data/html/${txtFile}`,
-        resultUrl
-    };
 }
 
 function appendToFile(filePath, content) {
