@@ -66,7 +66,8 @@
         let initialPromptProcessed = false;
         let streamCompleted = false;
         let intervalId = null; // To store the interval ID
-        let initialLoadCompletedInstantly = false; // New flag
+        let initialLoadCompletedInstantly = false; 
+        let previousFullFetchedText = null; // New: To store the full text from the previous fetch
 
         // Function to show "Waiting for response..."
         function showWaitingMessage() {
@@ -111,7 +112,7 @@
 
                     if (animate) {
                         span.style.animationDelay = `${animationDelayCounter * 0.03}s`; 
-                        animationDelayCounter++; // Increment only for animated characters
+                        animationDelayCounter++; 
                     } else {
                         span.style.opacity = '1';
                         span.style.transform = 'translateY(0)';
@@ -123,13 +124,13 @@
         }
 
         function loadContent() {
-            // If stream completed on a previous ongoing fetch, or if it completed instantly on first load, stop.
-            if (streamCompleted) { 
-                if (intervalId) {
-                    clearInterval(intervalId);
-                    intervalId = null;
-                }
+            if (streamCompleted && !initialLoadCompletedInstantly) { 
+                if (intervalId) { clearInterval(intervalId); intervalId = null; }
                 return;
+            }
+            if (initialLoadCompletedInstantly) { 
+                 if (intervalId) { clearInterval(intervalId); intervalId = null; }
+                return; 
             }
 
             const txtUrl = window.location.href.replace(/\.html$/, '.txt');
@@ -142,100 +143,99 @@
                     return response.text();
                 })
                 .then(text => {
-                    // Re-check streamCompleted in case it was set by a concurrent operation or fast-finishing stream
-                    if (streamCompleted && !initialLoadCompletedInstantly) { // if completed by ongoing stream
-                         if (intervalId) { clearInterval(intervalId); intervalId = null;}
-                         return;
+                    if (initialLoadCompletedInstantly) return; 
+                    if (streamCompleted && !initialLoadCompletedInstantly && intervalId) { 
+                        clearInterval(intervalId); intervalId = null; return;
                     }
-                    if (initialLoadCompletedInstantly) { // if already rendered instantly, do nothing more
-                        return;
-                    }
-
-
-                    // Handle initial full load if stream was already complete in the fetched text
-                    if (lastLength === 0 && text && text.includes("[STREAM_COMPLETE]")) {
-                        streamCompleted = true;
-                        initialLoadCompletedInstantly = true; 
-                        if (intervalId) { clearInterval(intervalId); intervalId = null; }
-
-                        let contentToParse = text.substring(0, text.indexOf("[STREAM_COMPLETE]"));
-                        
-                        // Check for [RESET] even in an already completed stream text
-                        if (contentToParse.includes("[RESET]")) {
+                    
+                    // --- New: Detect re-initialized .txt file ---
+                    if (previousFullFetchedText !== null && text !== null) {
+                        // Check if text is shorter or doesn't start with the previous full text
+                        if (text.length < previousFullFetchedText.length || !text.startsWith(previousFullFetchedText)) {
+                            console.log('Underlying .txt file appears to have been re-initialized. Reloading page.');
                             window.location.reload();
-                            return;
+                            return; // Stop further processing for this fetch
                         }
+                    }
+                    // Store the current full text for the next comparison if it's valid
+                    if (text !== null && typeof text !== 'undefined') {
+                        previousFullFetchedText = text;
+                    }
+                    // --- End of New Detection Logic ---
 
-                        let promptText = "";
-                        let completionText = contentToParse; 
+                    // --- Initial Load Specific Logic (lastLength === 0 && text) ---
+                    if (lastLength === 0 && text) { 
+                        // No [RESET] check here anymore based on user clarification.
+                        // Check for [STREAM_COMPLETE] in the *entire initial text*
+                        if (text.includes("[STREAM_COMPLETE]")) {
+                            streamCompleted = true;
+                            initialLoadCompletedInstantly = true; 
+                            if (intervalId) { clearInterval(intervalId); intervalId = null; }
 
-                        const promptStartTag = "[PROMPT]";
-                        const promptEndTag = "[/PROMPT]";
-                        if (contentToParse.startsWith(promptStartTag)) {
-                            const endPromptIdx = contentToParse.indexOf(promptEndTag, promptStartTag.length);
-                            if (endPromptIdx !== -1) {
-                                promptText = contentToParse.substring(promptStartTag.length, endPromptIdx);
-                                completionText = contentToParse.substring(endPromptIdx + promptEndTag.length);
+                            let contentToParse = text.substring(0, text.indexOf("[STREAM_COMPLETE]"));
+                            
+                            let promptText = "";
+                            let completionText = contentToParse; 
+
+                            const promptStartTag = "[PROMPT]";
+                            const promptEndTag = "[/PROMPT]";
+                            if (contentToParse.startsWith(promptStartTag)) {
+                                const endPromptIdx = contentToParse.indexOf(promptEndTag, promptStartTag.length);
+                                if (endPromptIdx !== -1) {
+                                    promptText = contentToParse.substring(promptStartTag.length, endPromptIdx);
+                                    completionText = contentToParse.substring(endPromptIdx + promptEndTag.length);
+                                }
                             }
+                            
+                            if (promptText.length > 0) {
+                                appendCharacters(promptText, contentDiv, true, false); // Animate = false
+                            }
+                            if (completionText.length > 0) {
+                                appendCharacters(completionText, contentDiv, false, false); // Animate = false
+                            }
+                            
+                            lastLength = text.length; 
+                            initialPromptProcessed = true; 
+                            window.scrollTo(0, document.body.scrollHeight);
+                            return; 
                         }
-                        
-                        if (promptText.length > 0) {
-                            appendCharacters(promptText, contentDiv, true, false); // Animate = false
-                        }
-                        if (completionText.length > 0) {
-                            appendCharacters(completionText, contentDiv, false, false); // Animate = false
-                        }
-                        
-                        lastLength = text.length; 
-                        initialPromptProcessed = true; 
-                        window.scrollTo(0, document.body.scrollHeight);
-                        return; 
                     }
 
                     // --- Regular ongoing stream processing ---
                     if (text && text.length > lastLength) {
                         let newTextFromServer = text.substring(lastLength);
-
-                        // 0. Check for [RESET] tag
-                        if (newTextFromServer.includes("[RESET]")) {
-                            window.location.reload();
-                            return; 
-                        }
+                        // No [RESET] check here anymore. The re-initialization check above handles fundamental changes.
                         
                         let textToRenderThisIteration = newTextFromServer; 
                         let applyAnimation = true; 
 
-                        // 1. Handle [STREAM_COMPLETE] tag for ongoing stream
                         if (textToRenderThisIteration.includes("[STREAM_COMPLETE]")) {
                             streamCompleted = true;
                             textToRenderThisIteration = textToRenderThisIteration.substring(0, textToRenderThisIteration.indexOf("[STREAM_COMPLETE]"));
-                            applyAnimation = false; // Final part before tag is instant
+                            applyAnimation = false; 
                             if (intervalId) { 
                                 clearInterval(intervalId);
                                 intervalId = null;
                             }
                         }
 
-                        // 2. Handle Initial Prompt (if not yet processed and this is the first chunk of an ongoing stream)
                         if (!initialPromptProcessed && lastLength === 0) { 
                             const promptStartTag = "[PROMPT]";
                             const promptEndTag = "[/PROMPT]";
                             
-                            // Use the current textToRenderThisIteration for prompt parsing, as it might have been truncated by [STREAM_COMPLETE]
                             if (textToRenderThisIteration.startsWith(promptStartTag)) {
                                 const endPromptIdx = textToRenderThisIteration.indexOf(promptEndTag, promptStartTag.length);
                                 if (endPromptIdx !== -1) {
                                     const promptContent = textToRenderThisIteration.substring(promptStartTag.length, endPromptIdx);
                                     if (promptContent.length > 0) {
-                                        appendCharacters(promptContent, contentDiv, true, true); // Prompt animates
+                                        appendCharacters(promptContent, contentDiv, true, true); 
                                     }
                                     textToRenderThisIteration = textToRenderThisIteration.substring(endPromptIdx + promptEndTag.length);
                                 }
                             }
-                            initialPromptProcessed = true; // Mark as processed whether found or not
+                            initialPromptProcessed = true; 
                         }
                         
-                        // 3. Append the remaining textToRenderThisIteration
                         if (textToRenderThisIteration.length > 0) {
                             appendCharacters(textToRenderThisIteration, contentDiv, false, applyAnimation);
                         }
@@ -247,7 +247,6 @@
                         }
                     }
                     
-                    // Final safety check for clearing interval if stream completed
                     if (streamCompleted && intervalId) {
                         clearInterval(intervalId);
                         intervalId = null;
@@ -262,7 +261,6 @@
                 });
         }
 
-        // Initial setup when the DOM is ready
         document.addEventListener('DOMContentLoaded', () => {
             showWaitingMessage(); 
             loadContent(); 

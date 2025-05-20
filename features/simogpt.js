@@ -83,11 +83,8 @@ async function startStreamingResponse(prompt, client, channel) {
         
         // Write files
         fs.writeFileSync(htmlPath, htmlContent);
+
         fs.writeFileSync(txtPath, '');
-        // Initialize latest.txt if it doesn't exist
-        if (!fs.existsSync(LATEST_FILE)) {
-            fs.writeFileSync(LATEST_FILE, '');
-        }
         
         console.log(`Successfully created files at ${htmlPath} and ${txtPath}`);
         
@@ -131,7 +128,6 @@ async function streamLLMResponse(prompt, filePath) {
         
         // Write the prompt with styling markers to both files
         fs.writeFileSync(filePath, styledPrompt);
-        fs.writeFileSync(LATEST_FILE, styledPrompt);
         
         const response = await axios({
             method: 'post',
@@ -145,13 +141,20 @@ async function streamLLMResponse(prompt, filePath) {
 
         return new Promise((resolve, reject) => {
             let buffer = '';
+            let latestBufferLen = 0;
             
             // Create a write stream to append to the file
             const writeStream = fs.createWriteStream(filePath, { flags: 'a' });
+            let writeStreamLatest = null;
             
             response.data.on('data', (chunk) => {
                 try {
                     buffer += chunk.toString();
+                    if (latestBufferLen === 0) {
+                        fs.writeFileSync(LATEST_FILE, styledPrompt);
+                        writeStreamLatest = fs.createWriteStream(LATEST_FILE, { flags: 'a' });
+                    }
+                    latestBufferLen += chunk.length;
                     const lines = buffer.split('\n');
                     buffer = lines.pop(); // Save incomplete line for next chunk
                     
@@ -167,6 +170,7 @@ async function streamLLMResponse(prompt, filePath) {
                                 if (parsed.content) {
                                     // Write to the file
                                     writeStream.write(parsed.content, 'utf8');
+                                    writeStreamLatest.write(parsed.content, 'utf8');
                                     console.log('Appended chunk:', JSON.stringify(parsed.content));
                                 }
                             }
@@ -186,6 +190,10 @@ async function streamLLMResponse(prompt, filePath) {
                     writeStream.end();
                     resolve();
                 });
+                writeStreamLatest.write(completionMarker, 'utf8', () => {
+                    writeStreamLatest.end();
+                    resolve();
+                });
             });
 
             response.data.on('error', (err) => {
@@ -195,12 +203,20 @@ async function streamLLMResponse(prompt, filePath) {
                     writeStream.end();
                     reject(err);
                 });
+                writeStreamLatest.write(completionMarker, 'utf8', () => {
+                    writeStreamLatest.end();
+                    reject(err);
+                });
             });
             
             // Handle process termination
             process.on('SIGINT', () => {
                 writeStream.write(completionMarker, 'utf8', () => {
                     writeStream.end();
+                    process.exit();
+                });
+                writeStreamLatest.write(completionMarker, 'utf8', () => {
+                    writeStreamLatest.end();
                     process.exit();
                 });
             });
