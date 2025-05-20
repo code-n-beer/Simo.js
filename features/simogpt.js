@@ -75,11 +75,35 @@ var simogpt = function(client, channel, from, line) {
         });
 };
 
+var simoq = function(client, channel, from, line) {
+    var url = "http://llama:8111/completion";
+
+    const msg = line.split(' ').slice(1).join(' ');
+
+    const payload = {
+        prompt: msg,
+        n_predict: 128,
+	repeat_penalty: 3.2,
+    };
+
+    axios.post(url, payload)
+        .then(response => {
+	    let result = `${response.data.content}`;
+            result = result.trim().replace(/(\r\n|\n|\r)+/gm, " # ").trim().substring(0,maximumMsgLength);
+            client.say(channel, result);
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            client.say(channel, "An error occurred while processing your request.");
+        });
+};
+
 
 
 module.exports = {
 	name: "simogpt", //not required atm iirc 
 	commands: {
 		"!simogpt": simogpt,
+		"!simoq": simoq,
 	}
 }

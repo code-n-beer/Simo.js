@@ -31,7 +31,7 @@ var run = function(client, channel, from, line) {
             if (!err) {
                 res = output instanceof Object ? JSON.stringify(output) : String(output)
                 if (!client.isMock) {
-                    res = res.substring(0, 400);
+                    res = res.substring(0, 10000);
                 }
                 res = res.replace(/(\r\n|\n|\r)/gm, ' ');
                 res = res.replace(/^"/, '');

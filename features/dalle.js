@@ -3,8 +3,8 @@ const axios = require('axios'),
     moment = require('moment'),
     path = require('path');
 
-let token = JSON.parse(fs.readFileSync('simojs-data/settings.json')).stablediffusionReplicate.api_key
-let dalleToken = JSON.parse(fs.readFileSync('simojs-data/settings.json')).dalle.api_key
+let token = JSON.parse(fs.readFileSync('/simojs-data/settings.json')).stablediffusionReplicate.api_key
+let dalleToken = JSON.parse(fs.readFileSync('/simojs-data/settings.json')).dalle.api_key
 
 let authHeader = {
 	Authorization: `Token ${token}`,

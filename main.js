@@ -132,7 +132,7 @@ client.addListener('message', function(from, to, message) {
         multicommand.exec(to, from, message, function(result) {
             if (!result)
                 return;
-            client.say(to, result);
+            client.say(to, result.substring(0, 400));
         });
 
     } catch (err) {

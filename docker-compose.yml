@@ -28,13 +28,20 @@ services:
 
   llama:  
     image: ghcr.io/ggerganov/llama.cpp:server
-    command: -m /models/llamafi-combo-1k-Q5_1.gguf -c 128 --host 0.0.0.0 --port 8111 --threads 8 --mlock
+    #command: -m /models/llamafi-combo-1k-Q5_1.gguf -c 128 --host 0.0.0.0 --port 8111 --threads 8 --mlock
+    #command: -m /models/llamafi-combo-1k-Q5_1.gguf -c 128 --host 0.0.0.0 --port 8111 --threads 8 --mlock
+    #command: -m /models/viking-13b-q6_k.gguf -c 128 --host 0.0.0.0 --port 8111 --threads 8 --mlock
+    command: -m /models/viking-13b-q5_k_m.gguf -c 128 --host 0.0.0.0 --port 8111 --threads 8 --mlock
     #command: -m /models/finnish-llama2-v0.2-Q5_1.gguf -c 128 --host 0.0.0.0 --port 8111 --threads 8 --mlock
     volumes:
       - "./models:/models"
     ports:
       - "8111:8111"
     restart: always
+    ulimits:
+      memlock:
+        soft: -1  # Allow unlimited locked memory (or a specific large value)
+        hard: -1  # Allow unlimited locked memory (or a specific large value)
 
 
   redis:

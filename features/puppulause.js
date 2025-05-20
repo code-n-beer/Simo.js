@@ -1,4 +1,3 @@
-const fiftyshadesgen = require('../lib/50shadesgen/src/js/generator.js');
 const concat = require('../lib/concat.js');
 const request = require('request');
 const htmlparser = require('htmlparser2');

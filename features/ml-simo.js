@@ -79,10 +79,11 @@ var gptJson = function(client, channel, from, line) {
 
 module.exports = {
 	name: "gpt", //not required atm iirc 
-	commands: {
-		"!gpt": gpt,
-		"!gptfi": gptfi,
-		"!gptnoprompt": gptNoPrompt,
-		"!gptjson": gptJson
-	}
+	commands: {}
+	//commands: {
+	//	"!gpt": gpt,
+	//	"!gptfi": gptfi,
+	//	"!gptnoprompt": gptNoPrompt,
+	//	"!gptjson": gptJson
+	//}
 }

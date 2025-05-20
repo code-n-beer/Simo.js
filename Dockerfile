@@ -21,7 +21,16 @@ ADD ./package.json /simobot/
 WORKDIR /simobot
 RUN npm install
 
-ADD ./ /simobot/
+#ADD ./ /simobot/
+
+# Add one file at a time, any nested folders won't be copied
+# Cannot move entire folder for some reason
+# jostain syystä ei toimi anteeksi piti sanomani
+ADD ./lib/* ./lib/
+ADD ./macros/* /simobot/macros/
+ADD ./resources/* /simobot/resources/
+ADD ./features/* /simobot/features/
+ADD addHost.sh backupSimo.sh dumpExpl.sh .gitignore joindb.js LightweightApi.py main.js marker migrate-logs.js package.json README.md redis.conf repeatSimo settings.json.example settings_pythonsimo.cfg settings_pythonsimo.cfg.example simojs.sqlite telegraf.conf test.log testscript ./
 
 RUN usermod -u 1000 simobot
 #RUN chown -R simobot:simobot /simobot

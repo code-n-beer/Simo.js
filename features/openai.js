@@ -2,7 +2,7 @@ const axios = require('axios'),
     fs = require('fs')
     moment = require('moment')
 
-let token = JSON.parse(fs.readFileSync('simojs-data/settings.json')).openai.api_key
+let token = JSON.parse(fs.readFileSync('/simojs-data/settings.json')).openai.api_key
 let headers = {
 	headers: {
 		'Authorization': `Bearer ${token}`
@@ -163,7 +163,7 @@ function processFileResult(result, client, channel) {
 		const filePromptSuffix = promptStuff.substring(0,100)
 		const resultFile = `${timestamp}--${filePromptSuffix}.html`
 		fs.writeFileSync(`/simojs-data/html/${resultFile}`, addHTML(result))
-		const resultPath = `https://gpt.prototyping.xyz/${resultFile}`
+		const resultPath = `http://gpt.prototyping.xyz/${resultFile}`
 		const ircResult = `${resultPath} ${result}`.trim().replace(/(\r\n|\n|\r)+/gm, " || ").substring(0,maximumMsgLength)
 		client.say(channel, ircResult)
 }
