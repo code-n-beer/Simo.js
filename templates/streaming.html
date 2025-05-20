@@ -6,14 +6,10 @@
     <title>Streaming Response</title>
     <style>
         #stream-status {
-            position: fixed;
-            top: 10px;
-            right: 10px;
-            padding: 5px 10px;
-            background: rgba(0, 0, 0, 0.7);
-            border-radius: 4px;
+            /* Removed position, top, right, padding, background, border-radius, z-index */
+            /* These are now handled by .status-container or are no longer needed */
             font-size: 14px;
-            z-index: 1000;
+            order: 2; /* Will be the second item in the flex container */
         }
         .status-queue { color: #ff9900; }
         .status-ongoing { color: #00ff00; }
@@ -56,12 +52,17 @@
             top: 10px;
             right: 10px;
             z-index: 1000;
-            padding: 5px 0;
+            display: flex; /* Arrange children (link and status) in a row */
+            align-items: center; /* Vertically align items in the container */
+            background: rgba(0, 0, 0, 0.7); /* Background for the whole box */
+            border-radius: 4px; /* Rounded corners for the whole box */
+            padding: 5px 10px; /* Padding inside the box, around link and status */
         }
         .latest-link {
+            order: 1; /* Will be the first item in the flex container */
             color: #00cc00;
             text-decoration: none;
-            margin-left: 10px;
+            margin-right: 10px; /* Space between the link and the status text */
             padding: 2px 6px;
             border: 1px solid #00cc00;
             border-radius: 3px;
@@ -174,15 +175,15 @@
                     if (typeof text !== 'string') {
                         console.error("Fetched text is not a string:", text);
                         if (lastLength === 0 && !streamCompleted) {
-                             showWaitingMessage(); // This also calls updateStreamStatus('queue') via DOMContentLoaded or error
-                             if (!contentDiv.querySelector('.prompt-message')) updateStreamStatus('queue'); // Ensure status if text isn't shown
+                            showWaitingMessage(); // This also calls updateStreamStatus('queue') via DOMContentLoaded or error
+                            if (!contentDiv.querySelector('.prompt-message')) updateStreamStatus('queue'); // Ensure status if text isn't shown
                         }
                         return; 
                     }
 
                     if (!isLatestPage && (initialLoadCompletedInstantly || streamCompleted)) {
-                         if (intervalId) { clearInterval(intervalId); intervalId = null;}
-                         return;
+                        if (intervalId) { clearInterval(intervalId); intervalId = null;}
+                        return;
                     }
 
                     if (previousFullFetchedText !== null) {
@@ -242,7 +243,7 @@
                             // If only prompt was rendered from this first chunk and stream is not complete
                             updateStreamStatus('queue'); // Back to queue, waiting for completion
                         } else if (!promptText.length && !completionText.length && !streamCompleted) {
-                             // Fetched text but it was all tags and nothing to render, still waiting
+                            // Fetched text but it was all tags and nothing to render, still waiting
                             updateStreamStatus('queue');
                         }
                         
@@ -292,7 +293,7 @@
                 .catch(error => {
                     console.error('Error loading content:', error);
                     if (lastLength === 0 && !streamCompleted) { 
-                        updateStreamStatus('error'); // Set status to queue on error if nothing loaded
+                        updateStreamStatus('error'); // Set status to error on error if nothing loaded
                         showWaitingMessage(); 
                     }
                 });
