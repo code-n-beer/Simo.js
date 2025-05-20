@@ -6,14 +6,22 @@
     <title>Streaming Response</title>
     <style>
         #stream-status {
-            /* Removed position, top, right, padding, background, border-radius, z-index */
-            /* These are now handled by .status-container or are no longer needed */
             font-size: 14px;
             order: 2; /* Will be the second item in the flex container */
         }
-        .status-queue { color: #ff9900; }
-        .status-ongoing { color: #00ff00; }
-        .status-ended { color: #888888; }
+        /* Status-specific text-shadows for a "screen glow" effect */
+        .status-queue { 
+            color: #ff9900; 
+            text-shadow: 0 0 2px #ff9900, 0 0 4px rgba(255, 153, 0, 0.7); 
+        }
+        .status-ongoing { 
+            color: #00ff00; 
+            text-shadow: 0 0 2px #00ff00, 0 0 4px rgba(0, 255, 0, 0.7); 
+        }
+        .status-ended { 
+            color: #888888; 
+            text-shadow: 0 0 2px #aaaaaa, 0 0 4px rgba(136, 136, 136, 0.7); 
+        }
 
         body {
             background-color: #1a1a1a;
@@ -22,17 +30,16 @@
             padding: 20px;
             white-space: pre-wrap;
             line-height: 1.5;
-            margin: 0; /* Added for consistency */
+            margin: 0;
         }
         #content {
-            outline: none; /* For potential focus without visible outline */
+            outline: none;
         }
         .token {
             display: inline-block;
             opacity: 0;
             transform: translateY(20px);
             animation: slideIn 0.3s forwards, fadeIn 0.3s forwards;
-            /* animation-delay is set by JS */
         }
         @keyframes slideIn {
             to { transform: translateY(0); }
@@ -40,11 +47,11 @@
         @keyframes fadeIn {
             to { opacity: 1; }
         }
-        .prompt-message { /* Style for the "Waiting..." message */
+        .prompt-message {
             font-style: italic;
             color: #00cc00; 
         }
-        strong { /* For bolded prompt text */
+        strong {
             font-weight: bold;
         }
         .status-container {
@@ -52,26 +59,57 @@
             top: 10px;
             right: 10px;
             z-index: 1000;
-            display: flex; /* Arrange children (link and status) in a row */
-            align-items: center; /* Vertically align items in the container */
-            background: rgba(0, 0, 0, 0.7); /* Background for the whole box */
-            border-radius: 4px; /* Rounded corners for the whole box */
-            padding: 5px 10px; /* Padding inside the box, around link and status */
+            display: flex;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 4px;
+            padding: 5px 10px;
         }
+
         .latest-link {
-            order: 1; /* Will be the first item in the flex container */
+            order: 1;
             color: #00cc00;
             text-decoration: none;
-            margin-right: 10px; /* Space between the link and the status text */
-            padding: 2px 6px;
-            border: 1px solid #00cc00;
+            margin-right: 10px;
+            padding: 3px 8px; /* Slightly adjusted padding */
+            border: 1px solid #009900; /* Muted green border */
             border-radius: 3px;
-            opacity: 0.7;
-            transition: opacity 0.2s;
+            opacity: 0.9; /* Slightly less than full, but not too dim */
+            transition: color 0.3s, border-color 0.3s, text-shadow 0.3s, box-shadow 0.3s, opacity 0.3s;
+            cursor: pointer;
         }
-        .latest-link:hover {
+
+        .latest-link:not(.glowing-button):hover {
+            color: #33ff33; /* Brighter green on hover */
+            border-color: #00dd00; /* Brighter border on hover */
+            text-shadow: 0 0 5px rgba(0, 255, 0, 0.6);
             opacity: 1;
-            text-decoration: none;
+        }
+
+        /* Glowing effect for the button on latest.html */
+        @keyframes pulseGlowButton {
+            0% {
+                text-shadow: 0 0 2px #abffab, 0 0 4px #80ff80;
+                box-shadow: 0 0 3px rgba(0, 220, 0, 0.5), inset 0 0 2px rgba(0, 200, 0, 0.4);
+                border-color: #00bb00;
+            }
+            50% {
+                text-shadow: 0 0 5px #cceecc, 0 0 10px #99ff99, 0 0 15px #66ff66;
+                box-shadow: 0 0 8px rgba(50, 255, 50, 0.75), inset 0 0 5px rgba(80, 255, 80, 0.65);
+                border-color: #66ff66;
+            }
+            100% {
+                text-shadow: 0 0 2px #abffab, 0 0 4px #80ff80;
+                box-shadow: 0 0 3px rgba(0, 220, 0, 0.5), inset 0 0 2px rgba(0, 200, 0, 0.4);
+                border-color: #00bb00;
+            }
+        }
+
+        .glowing-button {
+            color: #d9ffd9; /* Bright text for glowing button */
+            animation: pulseGlowButton 2s infinite ease-in-out;
+            opacity: 1; /* Full opacity when glowing */
+            /* border-color is handled by the animation */
         }
     </style>
 </head>
@@ -83,14 +121,14 @@
     <div id="content"></div>
     <script>
         const contentDiv = document.getElementById('content');
-        let lastLength = 0; // Tracks total length of text received from server
+        let lastLength = 0;
         let animationDelayCounter = 0;
         let initialPromptProcessed = false;
         let streamCompleted = false;
-        let intervalId = null; // To store the interval ID
+        let intervalId = null;
         let initialLoadCompletedInstantly = false; 
-        let previousFullFetchedText = null; // To store the full text from the previous fetch
-        let isLatestPage = false; // Flag to identify if current page is latest.html
+        let previousFullFetchedText = null;
+        let isLatestPage = false;
         const streamStatusElement = document.getElementById('stream-status');
 
         function updateStreamStatus(status) {
@@ -101,9 +139,7 @@
             }
         }
 
-        // Function to show "Waiting for response..." text
         function showWaitingMessage() {
-            // Status is set initially in DOMContentLoaded or on error
             if (contentDiv.querySelector('.prompt-message') || contentDiv.textContent.trim() !== '') {
                 return;
             }
@@ -113,7 +149,6 @@
             contentDiv.appendChild(promptSpan);
         }
 
-        // Function to hide "Waiting for response..." text
         function hideWaitingMessage() {
             const waitingMsg = contentDiv.querySelector('.prompt-message');
             if (waitingMsg) {
@@ -175,8 +210,8 @@
                     if (typeof text !== 'string') {
                         console.error("Fetched text is not a string:", text);
                         if (lastLength === 0 && !streamCompleted) {
-                            showWaitingMessage(); // This also calls updateStreamStatus('queue') via DOMContentLoaded or error
-                            if (!contentDiv.querySelector('.prompt-message')) updateStreamStatus('queue'); // Ensure status if text isn't shown
+                            showWaitingMessage();
+                            if (!contentDiv.querySelector('.prompt-message')) updateStreamStatus('queue');
                         }
                         return; 
                     }
@@ -197,7 +232,7 @@
 
                     if (initialLoadCompletedInstantly || streamCompleted) {
                         lastLength = text.length; 
-                        if (streamCompleted) updateStreamStatus('ended'); // Ensure status is ended if polling latest.html
+                        if (streamCompleted) updateStreamStatus('ended');
                         return; 
                     }
                     
@@ -206,12 +241,12 @@
                     let hasProcessedContentInThisIteration = false;
 
                     if (lastLength === 0 && textForCurrentProcessing.length > 0) { 
-                        animationDelayCounter = 0; // **BUG 1 FIX: Reset for initial content block**
-                        initialPromptProcessed = true; // Process prompt logic for this first chunk
+                        animationDelayCounter = 0;
+                        initialPromptProcessed = true;
 
                         if (textForCurrentProcessing.includes("[STREAM_COMPLETE]")) {
                             streamCompleted = true;
-                            updateStreamStatus('ended'); // Status update for initial load complete
+                            updateStreamStatus('ended');
                             initialLoadCompletedInstantly = true; 
                             animateOutput = false; 
                             if (!isLatestPage && intervalId) { clearInterval(intervalId); intervalId = null; }
@@ -240,35 +275,26 @@
                             if (!streamCompleted) updateStreamStatus('ongoing'); 
                             hasProcessedContentInThisIteration = true;
                         } else if (promptText.length > 0 && !streamCompleted) {
-                            // If only prompt was rendered from this first chunk and stream is not complete
-                            updateStreamStatus('queue'); // Back to queue, waiting for completion
+                            updateStreamStatus('queue');
                         } else if (!promptText.length && !completionText.length && !streamCompleted) {
-                            // Fetched text but it was all tags and nothing to render, still waiting
                             updateStreamStatus('queue');
                         }
                         
                         lastLength = text.length; 
                         if (hasProcessedContentInThisIteration) window.scrollTo(0, document.body.scrollHeight);
-                        
-                        // This return handles the case where the *entire initial text* was processed.
-                        // If it was an initial chunk of an ongoing stream, subsequent text will be handled by the next block.
-                        // However, to ensure correct flow, if text.length > lastLength was true before, it might re-enter.
-                        // The key is that initialPromptProcessed is now true.
-                        // And lastLength is now text.length. So the next condition text.length > lastLength will be false for this iteration.
                         return; 
                     }
 
-                    // --- Regular Ongoing Stream Processing (if text has grown and it's NOT the first pass where lastLength was 0) ---
-                    if (text.length > lastLength) { // This implies lastLength was > 0 from a previous chunk
+                    if (text.length > lastLength) {
                         let newTextFromServer = text.substring(lastLength);
-                        animationDelayCounter = 0; // **BUG 1 FIX: Reset for new incoming chunk for ongoing stream**
+                        animationDelayCounter = 0;
 
                         let textToRenderThisIteration = newTextFromServer; 
                         let applyAnimationForThisChunk = true; 
 
                         if (textToRenderThisIteration.includes("[STREAM_COMPLETE]")) {
                             streamCompleted = true;
-                            updateStreamStatus('ended'); // **BUG 2 FIX: Add status update here**
+                            updateStreamStatus('ended');
                             textToRenderThisIteration = textToRenderThisIteration.substring(0, textToRenderThisIteration.indexOf("[STREAM_COMPLETE]"));
                             applyAnimationForThisChunk = false; 
                             if (!isLatestPage && intervalId) { 
@@ -293,7 +319,7 @@
                 .catch(error => {
                     console.error('Error loading content:', error);
                     if (lastLength === 0 && !streamCompleted) { 
-                        updateStreamStatus('error'); // Set status to error on error if nothing loaded
+                        updateStreamStatus('error');
                         showWaitingMessage(); 
                     }
                 });
@@ -304,8 +330,16 @@
             const fileName = pathName.split('/').pop();
             isLatestPage = (fileName === 'latest.html' || fileName === ''); 
 
-            updateStreamStatus('queue'); // Set initial status
-            showWaitingMessage(); // Show "Waiting for response to start..." text
+            // Add class for glowing button if on latest.html
+            if (isLatestPage) {
+                const latestLinkButton = document.querySelector('.latest-link');
+                if (latestLinkButton) {
+                    latestLinkButton.classList.add('glowing-button');
+                }
+            }
+            
+            updateStreamStatus('queue');
+            showWaitingMessage();
             
             loadContent(); 
             intervalId = setInterval(loadContent, 100); 
