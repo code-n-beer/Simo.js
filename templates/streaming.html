@@ -87,13 +87,16 @@
         const streamStatusElement = document.getElementById('stream-status');
 
         function updateStreamStatus(status) {
-            streamStatusElement.textContent = `Status: ${status}`;
-            streamStatusElement.className = `status-${status.toLowerCase()}`;
+            if (streamStatusElement) {
+                const statusText = status.charAt(0).toUpperCase() + status.slice(1);
+                streamStatusElement.textContent = `Status: ${statusText}`;
+                streamStatusElement.className = `status-${status.toLowerCase()}`;
+            }
         }
 
-        // Function to show "Waiting for response..."
+        // Function to show "Waiting for response..." text
         function showWaitingMessage() {
-            updateStreamStatus('queue');
+            // Status is set initially in DOMContentLoaded or on error
             if (contentDiv.querySelector('.prompt-message') || contentDiv.textContent.trim() !== '') {
                 return;
             }
@@ -103,7 +106,7 @@
             contentDiv.appendChild(promptSpan);
         }
 
-        // Function to hide "Waiting for response..."
+        // Function to hide "Waiting for response..." text
         function hideWaitingMessage() {
             const waitingMsg = contentDiv.querySelector('.prompt-message');
             if (waitingMsg) {
@@ -147,16 +150,11 @@
         }
 
         function loadContent() {
-            // For non-latest pages, if stream is completed or was instantly loaded, stop polling.
             if (!isLatestPage && (streamCompleted || initialLoadCompletedInstantly)) {
-                if (intervalId) {
-                    clearInterval(intervalId);
-                    intervalId = null;
-                }
+                if (intervalId) { clearInterval(intervalId); intervalId = null; }
                 return;
             }
-            // For latest.html, polling continues even if streamCompleted, for re-initialization check.
-
+            
             const txtUrl = window.location.href.replace(/\.html$/, '.txt');
             
             fetch(txtUrl, { cache: 'no-store' })
@@ -167,142 +165,128 @@
                     return response.text();
                 })
                 .then(text => {
-                    // If, for some reason, these flags were set by another process for a non-latest page
+                    if (typeof text !== 'string') {
+                        console.error("Fetched text is not a string:", text);
+                        if (lastLength === 0 && !streamCompleted) {
+                             showWaitingMessage(); // This also calls updateStreamStatus('queue') via DOMContentLoaded or error
+                             if (!contentDiv.querySelector('.prompt-message')) updateStreamStatus('queue'); // Ensure status if text isn't shown
+                        }
+                        return; 
+                    }
+
                     if (!isLatestPage && (initialLoadCompletedInstantly || streamCompleted)) {
                          if (intervalId) { clearInterval(intervalId); intervalId = null;}
                          return;
                     }
 
-                    // --- Re-initialization Check (runs for all pages on every successful fetch after the first) ---
-                    if (previousFullFetchedText !== null && typeof text === 'string') {
+                    if (previousFullFetchedText !== null) {
                         if (text.length < previousFullFetchedText.length || !text.startsWith(previousFullFetchedText)) {
                             console.log('Underlying .txt file appears to have been re-initialized. Reloading page.');
                             window.location.reload();
-                            return; // Stop further processing for this fetch
+                            return; 
                         }
                     }
-                    if (typeof text === 'string') { // Store current text for next check
-                        previousFullFetchedText = text;
-                    }
-                    // --- End Re-initialization Check ---
+                    previousFullFetchedText = text;
 
-                    // If stream is "done" (either completed instantly or during prior streaming),
-                    // and it's not a re-initialization (which would have reloaded):
-                    // For latest.html: update lastLength and stop further rendering for this cycle.
-                    // For other pages: this state should have already stopped the interval.
                     if (initialLoadCompletedInstantly || streamCompleted) {
-                        if (typeof text === 'string') {
-                            lastLength = text.length; // Keep lastLength current for next re-init check
-                        }
+                        lastLength = text.length; 
+                        if (streamCompleted) updateStreamStatus('ended'); // Ensure status is ended if polling latest.html
                         return; 
                     }
                     
-                    // --- If we are here, stream is NOT YET marked as complete, AND this is not a re-initialization ---
+                    let textForCurrentProcessing = text; 
+                    let animateOutput = true; 
+                    let hasProcessedContentInThisIteration = false;
 
-                    // --- Initial Full Load Specific Logic (lastLength === 0 and text is present) ---
-                    if (lastLength === 0 && typeof text === 'string' && text.length > 0) { 
-                        let contentToProcess = text; // Process the full text for initial load checks
+                    if (lastLength === 0 && textForCurrentProcessing.length > 0) { 
+                        animationDelayCounter = 0; // **BUG 1 FIX: Reset for initial content block**
+                        initialPromptProcessed = true; // Process prompt logic for this first chunk
+
+                        if (textForCurrentProcessing.includes("[STREAM_COMPLETE]")) {
+                            streamCompleted = true;
+                            updateStreamStatus('ended'); // Status update for initial load complete
+                            initialLoadCompletedInstantly = true; 
+                            animateOutput = false; 
+                            if (!isLatestPage && intervalId) { clearInterval(intervalId); intervalId = null; }
+                            textForCurrentProcessing = textForCurrentProcessing.substring(0, textForCurrentProcessing.indexOf("[STREAM_COMPLETE]"));
+                        }
                         
-                        // Check if we have only prompt (in queue state)
-                        if (contentToProcess.endsWith('[/PROMPT]')) {
+                        let promptText = "";
+                        let completionText = textForCurrentProcessing; 
+                        const promptStartTag = "[PROMPT]";
+                        const promptEndTag = "[/PROMPT]";
+
+                        if (textForCurrentProcessing.startsWith(promptStartTag)) {
+                            const endPromptIdx = textForCurrentProcessing.indexOf(promptEndTag, promptStartTag.length);
+                            if (endPromptIdx !== -1) {
+                                promptText = textForCurrentProcessing.substring(promptStartTag.length, endPromptIdx);
+                                completionText = textForCurrentProcessing.substring(endPromptIdx + promptEndTag.length);
+                            }
+                        }
+                        
+                        if (promptText.length > 0) {
+                            appendCharacters(promptText, contentDiv, true, animateOutput); 
+                            hasProcessedContentInThisIteration = true;
+                        }
+                        if (completionText.length > 0) {
+                            appendCharacters(completionText, contentDiv, false, animateOutput);
+                            if (!streamCompleted) updateStreamStatus('ongoing'); 
+                            hasProcessedContentInThisIteration = true;
+                        } else if (promptText.length > 0 && !streamCompleted) {
+                            // If only prompt was rendered from this first chunk and stream is not complete
+                            updateStreamStatus('queue'); // Back to queue, waiting for completion
+                        } else if (!promptText.length && !completionText.length && !streamCompleted) {
+                             // Fetched text but it was all tags and nothing to render, still waiting
                             updateStreamStatus('queue');
                         }
-
-                        if (contentToProcess.includes("[STREAM_COMPLETE]")) {
-                            streamCompleted = true;
-                            updateStreamStatus('ended');
-                            initialLoadCompletedInstantly = true; 
-                            if (!isLatestPage && intervalId) { clearInterval(intervalId); intervalId = null; }
-
-                            contentToProcess = contentToProcess.substring(0, contentToProcess.indexOf("[STREAM_COMPLETE]"));
-                            
-                            let promptText = "";
-                            let completionText = contentToProcess; 
-
-                            const promptStartTag = "[PROMPT]";
-                            const promptEndTag = "[/PROMPT]";
-                            if (contentToProcess.startsWith(promptStartTag)) {
-                                const endPromptIdx = contentToProcess.indexOf(promptEndTag, promptStartTag.length);
-                                if (endPromptIdx !== -1) {
-                                    promptText = contentToProcess.substring(promptStartTag.length, endPromptIdx);
-                                    completionText = contentToProcess.substring(endPromptIdx + promptEndTag.length);
-                                }
-                            }
-                            
-                            if (promptText.length > 0) {
-                                appendCharacters(promptText, contentDiv, true, false); // Animate = false
-                            }
-                            if (completionText.length > 0) {
-                                appendCharacters(completionText, contentDiv, false, false); // Animate = false
-                            }
-                            
-                            lastLength = text.length; 
-                            initialPromptProcessed = true; 
-                            window.scrollTo(0, document.body.scrollHeight);
-                            // If it's latest.html, the interval continues. Otherwise, it was cleared above.
-                            return; 
-                        }
-                        // If no [STREAM_COMPLETE], it's the first chunk of an ongoing stream.
-                        // Regular ongoing stream logic below will handle it.
+                        
+                        lastLength = text.length; 
+                        if (hasProcessedContentInThisIteration) window.scrollTo(0, document.body.scrollHeight);
+                        
+                        // This return handles the case where the *entire initial text* was processed.
+                        // If it was an initial chunk of an ongoing stream, subsequent text will be handled by the next block.
+                        // However, to ensure correct flow, if text.length > lastLength was true before, it might re-enter.
+                        // The key is that initialPromptProcessed is now true.
+                        // And lastLength is now text.length. So the next condition text.length > lastLength will be false for this iteration.
+                        return; 
                     }
 
-                    // --- Regular Ongoing Stream Processing ---
-                    if (typeof text === 'string' && text.length > lastLength) {
+                    // --- Regular Ongoing Stream Processing (if text has grown and it's NOT the first pass where lastLength was 0) ---
+                    if (text.length > lastLength) { // This implies lastLength was > 0 from a previous chunk
                         let newTextFromServer = text.substring(lastLength);
+                        animationDelayCounter = 0; // **BUG 1 FIX: Reset for new incoming chunk for ongoing stream**
+
                         let textToRenderThisIteration = newTextFromServer; 
-                        let applyAnimation = true; 
+                        let applyAnimationForThisChunk = true; 
 
                         if (textToRenderThisIteration.includes("[STREAM_COMPLETE]")) {
                             streamCompleted = true;
-                            updateStreamStatus('ended');
+                            updateStreamStatus('ended'); // **BUG 2 FIX: Add status update here**
                             textToRenderThisIteration = textToRenderThisIteration.substring(0, textToRenderThisIteration.indexOf("[STREAM_COMPLETE]"));
-                            applyAnimation = false; 
+                            applyAnimationForThisChunk = false; 
                             if (!isLatestPage && intervalId) { 
-                                clearInterval(intervalId);
-                                intervalId = null;
+                                clearInterval(intervalId); intervalId = null;
                             }
-                        }
-
-
-                        if (!initialPromptProcessed && lastLength === 0) { 
-                            const promptStartTag = "[PROMPT]";
-                            const promptEndTag = "[/PROMPT]";
-                            
-                            if (textToRenderThisIteration.startsWith(promptStartTag)) {
-                                const endPromptIdx = textToRenderThisIteration.indexOf(promptEndTag, promptStartTag.length);
-                                if (endPromptIdx !== -1) {
-                                    const promptContent = textToRenderThisIteration.substring(promptStartTag.length, endPromptIdx);
-                                    if (promptContent.length > 0) {
-                                        appendCharacters(promptContent, contentDiv, true, true); 
-                                    }
-                                    textToRenderThisIteration = textToRenderThisIteration.substring(endPromptIdx + promptEndTag.length);
-                                }
-                            }
-                            initialPromptProcessed = true; 
                         }
                         
                         if (textToRenderThisIteration.length > 0) {
-                            updateStreamStatus('ongoing');
-                            appendCharacters(textToRenderThisIteration, contentDiv, false, applyAnimation);
+                            if (!streamCompleted) updateStreamStatus('ongoing');
+                            appendCharacters(textToRenderThisIteration, contentDiv, false, applyAnimationForThisChunk);
+                            hasProcessedContentInThisIteration = true;
                         }
 
                         lastLength = text.length; 
-                        
-                        if (newTextFromServer.length > 0) { 
-                           window.scrollTo(0, document.body.scrollHeight);
-                        }
+                        if (hasProcessedContentInThisIteration) window.scrollTo(0, document.body.scrollHeight);
                     }
                     
-                    // Safety clear for non-latest pages if stream completed
                     if (streamCompleted && !isLatestPage && intervalId) {
-                        clearInterval(intervalId);
-                        intervalId = null;
+                        clearInterval(intervalId); intervalId = null;
                     }
-
                 })
                 .catch(error => {
                     console.error('Error loading content:', error);
                     if (lastLength === 0 && !streamCompleted) { 
+                        updateStreamStatus('error'); // Set status to queue on error if nothing loaded
                         showWaitingMessage(); 
                     }
                 });
@@ -311,10 +295,11 @@
         document.addEventListener('DOMContentLoaded', () => {
             const pathName = window.location.pathname.toLowerCase();
             const fileName = pathName.split('/').pop();
-            // Consider root path (empty fileName after split) also as 'latest.html' for flexibility
             isLatestPage = (fileName === 'latest.html' || fileName === ''); 
 
-            showWaitingMessage(); 
+            updateStreamStatus('queue'); // Set initial status
+            showWaitingMessage(); // Show "Waiting for response to start..." text
+            
             loadContent(); 
             intervalId = setInterval(loadContent, 100); 
         });
