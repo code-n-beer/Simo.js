@@ -51,29 +51,35 @@
         strong { /* For bolded prompt text */
             font-weight: bold;
         }
-        .latest-link {
+        .status-container {
             position: fixed;
-            bottom: 10px;
+            top: 10px;
             right: 10px;
-            font-size: 12px;
-            color: #2a5c2a;
-            text-decoration: none;
-            transition: color 0.3s;
-            background: rgba(0, 0, 0, 0.3);
-            padding: 2px 6px;
-            border-radius: 3px;
             z-index: 1000;
+            padding: 5px 0;
+        }
+        .latest-link {
+            color: #00cc00;
+            text-decoration: none;
+            margin-left: 10px;
+            padding: 2px 6px;
+            border: 1px solid #00cc00;
+            border-radius: 3px;
+            opacity: 0.7;
+            transition: opacity 0.2s;
         }
         .latest-link:hover {
-            color: #3d8b3d;
-            text-decoration: underline;
+            opacity: 1;
+            text-decoration: none;
         }
     </style>
 </head>
 <body>
-    <div id="stream-status" class="status-waiting">Status: Waiting to start</div>
+    <div class="status-container">
+        <span id="stream-status" class="status-waiting">Status: Waiting to start</span>
+        <a href="latest.html" class="latest-link">Autorefresh latest</a>
+    </div>
     <div id="content"></div>
-    <a href="latest.html" class="latest-link">View Latest</a>
     <script>
         const contentDiv = document.getElementById('content');
         let lastLength = 0; // Tracks total length of text received from server
