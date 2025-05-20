@@ -66,10 +66,10 @@
         let initialPromptProcessed = false;
         let streamCompleted = false;
         let intervalId = null; // To store the interval ID
+        let initialLoadCompletedInstantly = false; // New flag
 
         // Function to show "Waiting for response..."
         function showWaitingMessage() {
-            // Only show if no prompt-message exists and contentDiv is effectively empty
             if (contentDiv.querySelector('.prompt-message') || contentDiv.textContent.trim() !== '') {
                 return;
             }
@@ -87,8 +87,8 @@
             }
         }
 
-        function appendCharacters(textSegment, parentElement, isBold) {
-            hideWaitingMessage(); // Hide "Waiting..." message as soon as we append actual content
+        function appendCharacters(textSegment, parentElement, isBold, animate = true) {
+            hideWaitingMessage(); 
 
             let currentTargetElement = parentElement;
             let strongTag = null;
@@ -102,21 +102,29 @@
             for (const char of textSegment) {
                 if (char === '\n') {
                     currentTargetElement.appendChild(document.createElement('br'));
-                } else if (char.match(/\s/)) { // Any whitespace character
+                } else if (char.match(/\s/)) { 
                     currentTargetElement.appendChild(document.createTextNode(char));
-                } else { // Non-whitespace character, to be animated
+                } else { 
                     const span = document.createElement('span');
-                    span.className = 'token';
+                    span.className = 'token'; 
                     span.textContent = char;
-                    span.style.animationDelay = `${animationDelayCounter * 0.03}s`; 
+
+                    if (animate) {
+                        span.style.animationDelay = `${animationDelayCounter * 0.03}s`; 
+                        animationDelayCounter++; // Increment only for animated characters
+                    } else {
+                        span.style.opacity = '1';
+                        span.style.transform = 'translateY(0)';
+                        span.style.animation = 'none'; 
+                    }
                     currentTargetElement.appendChild(span);
-                    animationDelayCounter++;
                 }
             }
         }
 
         function loadContent() {
-            if (streamCompleted) { // If stream already marked complete, stop fetching
+            // If stream completed on a previous ongoing fetch, or if it completed instantly on first load, stop.
+            if (streamCompleted) { 
                 if (intervalId) {
                     clearInterval(intervalId);
                     intervalId = null;
@@ -134,73 +142,112 @@
                     return response.text();
                 })
                 .then(text => {
-                    if (streamCompleted) return; // Check again, in case completed while fetch was in flight
+                    // Re-check streamCompleted in case it was set by a concurrent operation or fast-finishing stream
+                    if (streamCompleted && !initialLoadCompletedInstantly) { // if completed by ongoing stream
+                         if (intervalId) { clearInterval(intervalId); intervalId = null;}
+                         return;
+                    }
+                    if (initialLoadCompletedInstantly) { // if already rendered instantly, do nothing more
+                        return;
+                    }
 
+
+                    // Handle initial full load if stream was already complete in the fetched text
+                    if (lastLength === 0 && text && text.includes("[STREAM_COMPLETE]")) {
+                        streamCompleted = true;
+                        initialLoadCompletedInstantly = true; 
+                        if (intervalId) { clearInterval(intervalId); intervalId = null; }
+
+                        let contentToParse = text.substring(0, text.indexOf("[STREAM_COMPLETE]"));
+                        
+                        // Check for [RESET] even in an already completed stream text
+                        if (contentToParse.includes("[RESET]")) {
+                            window.location.reload();
+                            return;
+                        }
+
+                        let promptText = "";
+                        let completionText = contentToParse; 
+
+                        const promptStartTag = "[PROMPT]";
+                        const promptEndTag = "[/PROMPT]";
+                        if (contentToParse.startsWith(promptStartTag)) {
+                            const endPromptIdx = contentToParse.indexOf(promptEndTag, promptStartTag.length);
+                            if (endPromptIdx !== -1) {
+                                promptText = contentToParse.substring(promptStartTag.length, endPromptIdx);
+                                completionText = contentToParse.substring(endPromptIdx + promptEndTag.length);
+                            }
+                        }
+                        
+                        if (promptText.length > 0) {
+                            appendCharacters(promptText, contentDiv, true, false); // Animate = false
+                        }
+                        if (completionText.length > 0) {
+                            appendCharacters(completionText, contentDiv, false, false); // Animate = false
+                        }
+                        
+                        lastLength = text.length; 
+                        initialPromptProcessed = true; 
+                        window.scrollTo(0, document.body.scrollHeight);
+                        return; 
+                    }
+
+                    // --- Regular ongoing stream processing ---
                     if (text && text.length > lastLength) {
                         let newTextFromServer = text.substring(lastLength);
-                        // This will be the text processed in this iteration, after tags are handled
-                        let textToRenderThisIteration = newTextFromServer; 
 
-                        // 1. Handle [STREAM_COMPLETE] tag first
-                        // This tag signals the absolute end of content.
+                        // 0. Check for [RESET] tag
+                        if (newTextFromServer.includes("[RESET]")) {
+                            window.location.reload();
+                            return; 
+                        }
+                        
+                        let textToRenderThisIteration = newTextFromServer; 
+                        let applyAnimation = true; 
+
+                        // 1. Handle [STREAM_COMPLETE] tag for ongoing stream
                         if (textToRenderThisIteration.includes("[STREAM_COMPLETE]")) {
                             streamCompleted = true;
-                            // Take only the part before the tag
                             textToRenderThisIteration = textToRenderThisIteration.substring(0, textToRenderThisIteration.indexOf("[STREAM_COMPLETE]"));
-                            if (intervalId) { // Clear interval immediately
+                            applyAnimation = false; // Final part before tag is instant
+                            if (intervalId) { 
                                 clearInterval(intervalId);
                                 intervalId = null;
                             }
                         }
 
-                        // 2. Handle Initial Prompt (only if not yet processed)
-                        if (!initialPromptProcessed) {
-                            // This condition means it's the very first segment of text we're processing from the server
-                            if (lastLength === 0) { 
-                                const promptStartTag = "[PROMPT]";
-                                const promptEndTag = "[/PROMPT]";
-                                
-                                if (textToRenderThisIteration.startsWith(promptStartTag)) {
-                                    const endPromptIdx = textToRenderThisIteration.indexOf(promptEndTag, promptStartTag.length);
-                                    if (endPromptIdx !== -1) {
-                                        // Prompt tags found, extract content
-                                        const promptContent = textToRenderThisIteration.substring(promptStartTag.length, endPromptIdx);
-                                        if (promptContent.length > 0) {
-                                            appendCharacters(promptContent, contentDiv, true); // Render prompt as BOLD
-                                        }
-                                        // Update textToRenderThisIteration to be the part *after* the prompt
-                                        textToRenderThisIteration = textToRenderThisIteration.substring(endPromptIdx + promptEndTag.length);
-                                        initialPromptProcessed = true;
-                                    } else {
-                                        // [PROMPT] found, but not [/PROMPT] in this first chunk.
-                                        // We'll assume the prompt is malformed or not fully present as expected.
-                                        // Mark prompt as "processed" to avoid re-checking, and the text will be rendered normally.
-                                        initialPromptProcessed = true;
+                        // 2. Handle Initial Prompt (if not yet processed and this is the first chunk of an ongoing stream)
+                        if (!initialPromptProcessed && lastLength === 0) { 
+                            const promptStartTag = "[PROMPT]";
+                            const promptEndTag = "[/PROMPT]";
+                            
+                            // Use the current textToRenderThisIteration for prompt parsing, as it might have been truncated by [STREAM_COMPLETE]
+                            if (textToRenderThisIteration.startsWith(promptStartTag)) {
+                                const endPromptIdx = textToRenderThisIteration.indexOf(promptEndTag, promptStartTag.length);
+                                if (endPromptIdx !== -1) {
+                                    const promptContent = textToRenderThisIteration.substring(promptStartTag.length, endPromptIdx);
+                                    if (promptContent.length > 0) {
+                                        appendCharacters(promptContent, contentDiv, true, true); // Prompt animates
                                     }
-                                } else {
-                                     // First chunk of text, but doesn't start with [PROMPT]
-                                    initialPromptProcessed = true; // No prompt to process with special tags
+                                    textToRenderThisIteration = textToRenderThisIteration.substring(endPromptIdx + promptEndTag.length);
                                 }
-                            } else {
-                                // This case should ideally not be hit if lastLength === 0 is the true gate for first text.
-                                // If it is, it means we are beyond the first chunk, so prompt processing is done.
-                                initialPromptProcessed = true;
                             }
+                            initialPromptProcessed = true; // Mark as processed whether found or not
                         }
                         
-                        // 3. Append the remaining (or all of) textToRenderThisIteration as normal text
+                        // 3. Append the remaining textToRenderThisIteration
                         if (textToRenderThisIteration.length > 0) {
-                            appendCharacters(textToRenderThisIteration, contentDiv, false); // Render as NORMAL
+                            appendCharacters(textToRenderThisIteration, contentDiv, false, applyAnimation);
                         }
 
-                        lastLength = text.length; // Update lastLength to the total length of text received from server
+                        lastLength = text.length; 
                         
-                        // Scroll to bottom if any text was effectively added
-                        if (newTextFromServer.length > 0) { // Check original newTextFromServer for scrolling trigger
+                        if (newTextFromServer.length > 0) { 
                            window.scrollTo(0, document.body.scrollHeight);
                         }
                     }
-                    // If stream is now marked as complete, ensure interval is cleared (redundant if cleared above, but safe)
+                    
+                    // Final safety check for clearing interval if stream completed
                     if (streamCompleted && intervalId) {
                         clearInterval(intervalId);
                         intervalId = null;
@@ -210,17 +257,16 @@
                 .catch(error => {
                     console.error('Error loading content:', error);
                     if (lastLength === 0 && !streamCompleted) { 
-                        showWaitingMessage(); // Show "Waiting..." if error on first attempt and no content yet
+                        showWaitingMessage(); 
                     }
                 });
         }
 
         // Initial setup when the DOM is ready
         document.addEventListener('DOMContentLoaded', () => {
-            showWaitingMessage(); // Show "Waiting..." message initially
-            loadContent(); // Initial call to fetch content
-            // Set up the interval to periodically fetch content
-            intervalId = setInterval(loadContent, 100); // User's original interval
+            showWaitingMessage(); 
+            loadContent(); 
+            intervalId = setInterval(loadContent, 100); 
         });
     </script>
 </body>
