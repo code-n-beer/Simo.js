@@ -14,6 +14,11 @@
             margin: 0;
             overflow-x: hidden;
         }
+        
+        .italic {
+            color: #888;
+            font-style: italic;
+        }
         #content {
             display: inline-block;
             position: relative;
@@ -46,6 +51,14 @@
             font-style: italic;
             margin-top: 10px;
         }
+        
+        .content {
+            margin-top: 10px;
+        }
+        
+        .status.complete {
+            color: #4CAF50;
+        }
     </style>
 </head>
 <body>
@@ -57,9 +70,13 @@
         const contentDiv = document.getElementById('content');
         const cursor = document.getElementById('cursor');
         const statusDiv = document.getElementById('status');
+        
         let lastContent = '';
         let isTyping = false;
         let typeQueue = [];
+        let isComplete = false;
+        let checkInterval;
+        let hasProcessedPrompt = false;
 
         // Function to update status
         function updateStatus(message) {
@@ -116,8 +133,26 @@
             cursor.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'end' });
         }
 
-        // Load content from the text file
-        async function loadContent() {
+        // Process content and apply styling
+        function processContent(text) {
+            // Check for completion marker
+            if (text.includes('[STREAM_COMPLETE]')) {
+                isComplete = true;
+                clearInterval(checkInterval);
+                statusDiv.textContent = 'Generation complete';
+                statusDiv.className = 'status complete';
+                text = text.split('[STREAM_COMPLETE]')[0];
+            }
+            
+            // Replace styling markers with appropriate HTML
+            return text
+                .replace(/\[italic\](.*?)\[\/italic\]/gs, '<span class="italic">$1</span>')
+                .replace(/\[bold\](.*?)\[\/bold\]/gs, '<strong>$1</strong>')
+                .replace(/\[code\](.*?)\[\/code\]/gs, '<code>$1</code>');
+        }
+        
+        // Load initial content immediately
+        async function loadInitialContent() {
             const txtUrl = window.location.href.replace(/\.html$/, '.txt') + '?t=' + Date.now();
             
             try {
@@ -132,6 +167,56 @@
                 
                 if (!response.ok) {
                     updateStatus('Waiting for response to start...');
+                    return false;
+                }
+                
+                const text = await response.text();
+                
+                if (text) {
+                    // Process the content to handle markers
+                    const processedText = processContent(text);
+                    
+                    // Display existing content immediately
+                    contentDiv.textContent = processedText;
+                    lastContent = text; // Keep original text for diffing
+                    positionCursor();
+                    
+                    if (!isComplete) {
+                        updateStatus('Streaming in progress...');
+                    }
+                    
+                    return true;
+                }
+                return false;
+            } catch (error) {
+                console.error('Error loading initial content:', error);
+                return false;
+            }
+        }
+
+        // Load new content from the text file
+        async function loadNewContent() {
+            if (isComplete) {
+                clearInterval(checkInterval);
+                return;
+            }
+            
+            const txtUrl = window.location.href.replace(/\.html$/, '.txt') + '?t=' + Date.now();
+            
+            try {
+                const response = await fetch(txtUrl, { 
+                    cache: 'no-store',
+                    headers: {
+                        'Cache-Control': 'no-cache, no-store, must-revalidate',
+                        'Pragma': 'no-cache',
+                        'Expires': '0'
+                    }
+                });
+                
+                if (!response.ok) {
+                    if (lastContent.length === 0) {
+                        updateStatus('Waiting for response to start...');
+                    }
                     return;
                 }
                 
@@ -139,22 +224,28 @@
                 
                 if (text && text.length > lastContent.length) {
                     const newText = text.substring(lastContent.length);
+                    const processedText = processContent(text);
+                    
+                    // If we've hit the completion marker, handle that
+                    if (isComplete) {
+                        contentDiv.textContent = processedText;
+                        lastContent = text;
+                        positionCursor();
+                        return;
+                    }
+                    
+                    // Only animate in the new text
                     lastContent = text;
                     
                     // Add new characters to the queue
-                    typeQueue.push(...newText.split(''));
+                    const newChars = processedText.substring(contentDiv.textContent.length);
+                    typeQueue.push(...newChars.split(''));
                     
                     // Start typing if not already typing
-                    if (!isTyping) {
+                    if (!isTyping && typeQueue.length > 0) {
                         isTyping = true;
                         typeCharacter();
                     }
-                    
-                    updateStatus(`Receiving response... (${text.length} characters)`);
-                } else if (lastContent.length === 0) {
-                    updateStatus('Waiting for response to start...');
-                } else {
-                    updateStatus('Waiting for more content...');
                 }
             } catch (error) {
                 console.error('Error loading content:', error);
@@ -164,14 +255,43 @@
             }
         }
         
-        // Load content every 100ms
-        setInterval(loadContent, 100);
+        // Initialize
+        async function init() {
+            // Try to load existing content first
+            const hasContent = await loadInitialContent();
+            
+            // If no content yet, start checking for updates
+            if (!hasContent) {
+                checkInterval = setInterval(loadNewContent, 500);
+            } else {
+                // If we have content, check for updates less frequently
+                checkInterval = setInterval(loadNewContent, 2000);
+            }
+            
+            // Set up event listeners
+            window.addEventListener('resize', positionCursor);
+            
+            // Check if generation is complete by looking for a completion marker
+            const checkCompletion = async () => {
+                try {
+                    const response = await fetch(window.location.href.replace(/\.html$/, '.complete'));
+                    if (response.ok) {
+                        isComplete = true;
+                        clearInterval(checkInterval);
+                        cancelBtn.disabled = true;
+                        updateStatus('Generation complete');
+                    }
+                } catch (error) {
+                    // Ignore errors
+                }
+            };
+            
+            // Check for completion every 5 seconds
+            setInterval(checkCompletion, 5000);
+        }
         
-        // Initial load
-        loadContent();
-        
-        // Handle window resize to reposition cursor
-        window.addEventListener('resize', positionCursor);
+        // Start the application
+        init();
     </script>
 </body>
 </html>

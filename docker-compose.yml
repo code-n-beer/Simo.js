@@ -21,6 +21,7 @@ services:
     build: .
     volumes:
       - "./simojs-data/:/simojs-data"
+      - "./templates/:/templates"
     restart: always
     ports:
      - "8123:8123"

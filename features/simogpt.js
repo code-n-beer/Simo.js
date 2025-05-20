@@ -6,7 +6,7 @@ const { Readable } = require('stream');
 
 const maximumMsgLength = 390;
 // Use environment variable or default to a path in the container
-const HTML_TEMPLATE_PATH = process.env.HTML_TEMPLATE_PATH || '../templates/streaming.html';
+const HTML_TEMPLATE_PATH = '/templates/streaming.html';
 const OUTPUT_DIR = '/simojs-data/html';
 
 let greentextifier = `
@@ -69,10 +69,9 @@ async function startStreamingResponse(prompt, client, channel) {
         // Read template file
         let htmlContent;
         try {
-            // Read the template file
-            const templatePath = path.resolve(__dirname, HTML_TEMPLATE_PATH);
-            console.log(`Reading template from: ${templatePath}`);
-            htmlContent = fs.readFileSync(templatePath, 'utf8');
+            // Read the template file from mounted volume
+            console.log(`Reading template from: ${HTML_TEMPLATE_PATH}`);
+            htmlContent = fs.readFileSync(HTML_TEMPLATE_PATH, 'utf8');
             console.log('Successfully read template file');
         } catch (err) {
             console.error(`Error reading template file (${HTML_TEMPLATE_PATH}):`, err);
@@ -111,7 +110,7 @@ async function streamLLMResponse(prompt, filePath) {
     
     const payload = {
         prompt: prompt,
-        n_predict: 512,
+        n_predict: 128,
         repeat_penalty: 2.2,
         stream: true
     };
@@ -119,6 +118,13 @@ async function streamLLMResponse(prompt, filePath) {
     console.log(`Starting LLM streaming to ${filePath}`);
     
     try {
+        // Write the prompt with styling
+        const completionMarker = "\n[STREAM_COMPLETE]\n";
+        const styledPrompt = `[italic]${prompt}[/italic]\n\n`;
+        
+        // Write the prompt with styling markers
+        fs.writeFileSync(filePath, styledPrompt);
+        
         const response = await axios({
             method: 'post',
             url: url,
@@ -131,7 +137,6 @@ async function streamLLMResponse(prompt, filePath) {
 
         return new Promise((resolve, reject) => {
             let buffer = '';
-            let isFirstChunk = true;
             
             // Create a write stream to append to the file
             const writeStream = fs.createWriteStream(filePath, { flags: 'a' });
@@ -168,24 +173,38 @@ async function streamLLMResponse(prompt, filePath) {
 
             response.data.on('end', () => {
                 console.log('LLM stream ended');
-                writeStream.end();
-                resolve();
+                // Write completion marker
+                writeStream.write(completionMarker, 'utf8', () => {
+                    writeStream.end();
+                    resolve();
+                });
             });
 
             response.data.on('error', (err) => {
                 console.error('Stream error:', err);
-                writeStream.end();
-                reject(err);
+                // Still write completion marker on error
+                writeStream.write(completionMarker, 'utf8', () => {
+                    writeStream.end();
+                    reject(err);
+                });
             });
             
             // Handle process termination
             process.on('SIGINT', () => {
-                writeStream.end();
-                process.exit();
+                writeStream.write(completionMarker, 'utf8', () => {
+                    writeStream.end();
+                    process.exit();
+                });
             });
         });
     } catch (error) {
         console.error('Error in streamLLMResponse:', error);
+        // If we get here, the file might be in an inconsistent state
+        try {
+            fs.appendFileSync(filePath, "\n[STREAM_COMPLETE]\n", 'utf8');
+        } catch (e) {
+            console.error('Failed to write completion marker:', e);
+        }
         throw error;
     }
 }
