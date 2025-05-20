@@ -11,287 +11,144 @@
             padding: 20px;
             white-space: pre-wrap;
             line-height: 1.5;
-            margin: 0;
-            overflow-x: hidden;
         }
-        
-        .italic {
-            color: #888;
-            font-style: italic;
-        }
-        #content {
+        .token {
             display: inline-block;
-            position: relative;
-            min-height: 1em;
-        }
-        .char {
-            display: inline;
             opacity: 0;
-            animation: fadeIn 0.1s forwards;
+            transform: translateY(20px);
+            animation: slideIn 0.3s forwards, fadeIn 0.3s forwards;
+        }
+        @keyframes slideIn {
+            to { transform: translateY(0); }
         }
         @keyframes fadeIn {
             to { opacity: 1; }
         }
         .cursor {
             display: inline-block;
-            width: 8px;
-            height: 1.2em;
+            width: 10px;
+            height: 20px;
             background-color: #00ff00;
             animation: blink 1s infinite;
-            position: absolute;
-            bottom: 0;
             margin-left: 2px;
+            vertical-align: middle;
         }
         @keyframes blink {
             0%, 100% { opacity: 1; }
             50% { opacity: 0; }
-        }
-        .status {
-            color: #666;
-            font-style: italic;
-            margin-top: 10px;
-        }
-        
-        .content {
-            margin-top: 10px;
-        }
-        
-        .status.complete {
-            color: #4CAF50;
         }
     </style>
 </head>
 <body>
     <div id="content"></div>
     <div id="cursor" class="cursor"></div>
-    <div id="status" class="status">Loading response...</div>
-    
     <script>
         const contentDiv = document.getElementById('content');
         const cursor = document.getElementById('cursor');
-        const statusDiv = document.getElementById('status');
-        
-        let lastContent = '';
-        let isTyping = false;
-        let typeQueue = [];
-        let isComplete = false;
-        let checkInterval;
-        let hasProcessedPrompt = false;
+        let lastProcessedLength = 0;
+        let isProcessing = false;
 
-        // Function to update status
-        function updateStatus(message) {
-            statusDiv.textContent = message;
-            console.log(`Status: ${message}`);
-        }
-
-        // Function to type characters one by one
-        function typeCharacter() {
-            if (typeQueue.length === 0) {
-                isTyping = false;
-                positionCursor();
-                return;
-            }
-            
-            const char = typeQueue.shift();
-            const span = document.createElement('span');
-            span.className = 'char';
-            span.textContent = char;
-            contentDiv.appendChild(span);
-            
-            // Position cursor after the last character
-            positionCursor();
-            
-            // Schedule next character
-            setTimeout(typeCharacter, Math.random() * 20 + 10); // Random delay between 10-30ms
-        }
-        
-        // Position the cursor at the end of the content
-        function positionCursor() {
-            const range = document.createRange();
-            const sel = window.getSelection();
-            
-            // Create a temporary text node for cursor positioning
-            const tempNode = document.createTextNode('');
-            contentDiv.appendChild(tempNode);
-            
-            range.setStart(tempNode, 0);
-            range.collapse(true);
-            sel.removeAllRanges();
-            sel.addRange(range);
-            
-            const rects = range.getClientRects();
-            if (rects.length > 0) {
-                const lastRect = rects[0];
-                cursor.style.left = `${lastRect.right}px`;
-                cursor.style.top = `${lastRect.top}px`;
-            }
-            
-            // Remove the temporary node
-            contentDiv.removeChild(tempNode);
-            
-            // Scroll into view
-            cursor.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'end' });
-        }
-
-        // Process content and apply styling
         function processContent(text) {
             // Check for completion marker
             if (text.includes('[STREAM_COMPLETE]')) {
-                isComplete = true;
-                clearInterval(checkInterval);
-                statusDiv.textContent = 'Generation complete';
-                statusDiv.className = 'status complete';
                 text = text.split('[STREAM_COMPLETE]')[0];
+                cursor.style.display = 'none';
             }
             
-            // Replace styling markers with appropriate HTML
-            return text
-                .replace(/\[italic\](.*?)\[\/italic\]/gs, '<span class="italic">$1</span>')
-                .replace(/\[bold\](.*?)\[\/bold\]/gs, '<strong>$1</strong>')
-                .replace(/\[code\](.*?)\[\/code\]/gs, '<code>$1</code>');
-        }
-        
-        // Load initial content immediately
-        async function loadInitialContent() {
-            const txtUrl = window.location.href.replace(/\.html$/, '.txt') + '?t=' + Date.now();
-            
-            try {
-                const response = await fetch(txtUrl, { 
-                    cache: 'no-store',
-                    headers: {
-                        'Cache-Control': 'no-cache, no-store, must-revalidate',
-                        'Pragma': 'no-cache',
-                        'Expires': '0'
-                    }
-                });
-                
-                if (!response.ok) {
-                    updateStatus('Waiting for response to start...');
-                    return false;
-                }
-                
-                const text = await response.text();
-                
-                if (text) {
-                    // Process the content to handle markers
-                    const processedText = processContent(text);
-                    
-                    // Display existing content immediately
-                    contentDiv.textContent = processedText;
-                    lastContent = text; // Keep original text for diffing
-                    positionCursor();
-                    
-                    if (!isComplete) {
-                        updateStatus('Streaming in progress...');
-                    }
-                    
-                    return true;
-                }
-                return false;
-            } catch (error) {
-                console.error('Error loading initial content:', error);
-                return false;
-            }
+            // Process [PROMPT] markers
+            return text.replace(/\[PROMPT\](.*?)\[\/PROMPT\]/gs, 
+                '<span style="font-style: italic">$1</span>');
         }
 
-        // Load new content from the text file
-        async function loadNewContent() {
-            if (isComplete) {
-                clearInterval(checkInterval);
-                return;
-            }
+        function updateContent() {
+            if (isProcessing) return;
+            isProcessing = true;
             
             const txtUrl = window.location.href.replace(/\.html$/, '.txt') + '?t=' + Date.now();
             
-            try {
-                const response = await fetch(txtUrl, { 
-                    cache: 'no-store',
-                    headers: {
-                        'Cache-Control': 'no-cache, no-store, must-revalidate',
-                        'Pragma': 'no-cache',
-                        'Expires': '0'
+            fetch(txtUrl, { 
+                cache: 'no-store',
+                headers: {
+                    'Cache-Control': 'no-cache, no-store, must-revalidate',
+                    'Pragma': 'no-cache',
+                    'Expires': '0'
+                }
+            })
+            .then(response => {
+                if (!response.ok) throw new Error('Network response was not ok');
+                return response.text();
+            })
+            .then(text => {
+                if (!text || text.length <= lastProcessedLength) {
+                    isProcessing = false;
+                    return;
+                }
+
+                // Only process new content
+                const newContent = text.substring(lastProcessedLength);
+                lastProcessedLength = text.length;
+
+                // Process the content (handles PROMPT tags)
+                const processedContent = processContent(newContent);
+                
+                // Add new content with animation
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = processedContent;
+                
+                // Animate new content
+                const words = [];
+                const processNode = (node) => {
+                    if (node.nodeType === Node.TEXT_NODE) {
+                        const text = node.textContent;
+                        const wordSpans = text.split(/(\s+)/).map(word => {
+                            if (!word.trim()) return document.createTextNode(word);
+                            const span = document.createElement('span');
+                            span.className = 'token';
+                            span.textContent = word;
+                            return span;
+                        });
+                        words.push(...wordSpans);
+                    } else if (node.nodeType === Node.ELEMENT_NODE) {
+                        const span = document.createElement(node.tagName.toLowerCase());
+                        Array.from(node.attributes).forEach(attr => {
+                            span.setAttribute(attr.name, attr.value);
+                        });
+                        Array.from(node.childNodes).forEach(processNode);
+                        words.push(span);
+                    }
+                };
+                
+                Array.from(tempDiv.childNodes).forEach(processNode);
+                
+                // Add to DOM with animation
+                words.forEach(word => {
+                    contentDiv.appendChild(word);
+                    // Trigger animation
+                    if (word.classList && word.classList.contains('token')) {
+                        requestAnimationFrame(() => {
+                            word.style.opacity = '1';
+                            word.style.transform = 'translateY(0)';
+                        });
                     }
                 });
                 
-                if (!response.ok) {
-                    if (lastContent.length === 0) {
-                        updateStatus('Waiting for response to start...');
-                    }
-                    return;
-                }
-                
-                const text = await response.text();
-                
-                if (text && text.length > lastContent.length) {
-                    const newText = text.substring(lastContent.length);
-                    const processedText = processContent(text);
-                    
-                    // If we've hit the completion marker, handle that
-                    if (isComplete) {
-                        contentDiv.textContent = processedText;
-                        lastContent = text;
-                        positionCursor();
-                        return;
-                    }
-                    
-                    // Only animate in the new text
-                    lastContent = text;
-                    
-                    // Add new characters to the queue
-                    const newChars = processedText.substring(contentDiv.textContent.length);
-                    typeQueue.push(...newChars.split(''));
-                    
-                    // Start typing if not already typing
-                    if (!isTyping && typeQueue.length > 0) {
-                        isTyping = true;
-                        typeCharacter();
-                    }
-                }
-            } catch (error) {
+                // Position cursor at the end
+                cursor.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'end' });
+                isProcessing = false;
+            })
+            .catch(error => {
                 console.error('Error loading content:', error);
-                if (lastContent.length === 0) {
-                    updateStatus('Error loading response. Please try again.');
+                if (lastProcessedLength === 0) {
+                    contentDiv.textContent = 'Waiting for response to start...';
                 }
-            }
+                isProcessing = false;
+            });
         }
-        
-        // Initialize
-        async function init() {
-            // Try to load existing content first
-            const hasContent = await loadInitialContent();
-            
-            // If no content yet, start checking for updates
-            if (!hasContent) {
-                checkInterval = setInterval(loadNewContent, 500);
-            } else {
-                // If we have content, check for updates less frequently
-                checkInterval = setInterval(loadNewContent, 2000);
-            }
-            
-            // Set up event listeners
-            window.addEventListener('resize', positionCursor);
-            
-            // Check if generation is complete by looking for a completion marker
-            const checkCompletion = async () => {
-                try {
-                    const response = await fetch(window.location.href.replace(/\.html$/, '.complete'));
-                    if (response.ok) {
-                        isComplete = true;
-                        clearInterval(checkInterval);
-                        cancelBtn.disabled = true;
-                        updateStatus('Generation complete');
-                    }
-                } catch (error) {
-                    // Ignore errors
-                }
-            };
-            
-            // Check for completion every 5 seconds
-            setInterval(checkCompletion, 5000);
-        }
-        
-        // Start the application
-        init();
+
+        // Check for updates every 200ms
+        setInterval(updateContent, 200);
+        // Initial load
+        updateContent();
     </script>
 </body>
 </html>

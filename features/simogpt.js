@@ -120,7 +120,7 @@ async function streamLLMResponse(prompt, filePath) {
     try {
         // Write the prompt with styling
         const completionMarker = "\n[STREAM_COMPLETE]\n";
-        const styledPrompt = `[italic]${prompt}[/italic]\n\n`;
+        const styledPrompt = `[PROMPT]${prompt}[/PROMPT]`;
         
         // Write the prompt with styling markers
         fs.writeFileSync(filePath, styledPrompt);
