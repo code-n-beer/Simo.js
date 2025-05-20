@@ -27,7 +27,8 @@ services:
      - "127.0.0.1:9229:9229"
 
   llama:  
-    image: ghcr.io/ggerganov/llama.cpp:server
+    #image: ghcr.io/ggerganov/llama.cpp:server
+    image: ghcr.io/ggml-org/llama.cpp:server # new address
     #command: -m /models/llamafi-combo-1k-Q5_1.gguf -c 128 --host 0.0.0.0 --port 8111 --threads 8 --mlock
     #command: -m /models/llamafi-combo-1k-Q5_1.gguf -c 128 --host 0.0.0.0 --port 8111 --threads 8 --mlock
     #command: -m /models/viking-13b-q6_k.gguf -c 128 --host 0.0.0.0 --port 8111 --threads 8 --mlock

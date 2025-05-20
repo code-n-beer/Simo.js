@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Streaming Response</title>
+    <style>
+        body {
+            background-color: #1a1a1a;
+            color: #00ff00;
+            font-family: 'Courier New', monospace;
+            padding: 20px;
+            white-space: pre-wrap;
+            line-height: 1.5;
+        }
+        .token {
+            display: inline-block;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: slideIn 0.3s forwards, fadeIn 0.3s forwards;
+        }
+        @keyframes slideIn {
+            to { transform: translateY(0); }
+        }
+        @keyframes fadeIn {
+            to { opacity: 1; }
+        }
+        .cursor {
+            display: inline-block;
+            width: 10px;
+            height: 20px;
+            background-color: #00ff00;
+            animation: blink 1s infinite;
+            margin-left: 2px;
+            vertical-align: middle;
+        }
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+    <div id="content"></div>
+    <div id="cursor" class="cursor"></div>
+    <script>
+        const contentDiv = document.getElementById('content');
+        const cursor = document.getElementById('cursor');
+        let lastLength = 0;
+
+        function loadContent() {
+            const txtUrl = window.location.href.replace(/\.html$/, '.txt');
+            
+            fetch(txtUrl, { cache: 'no-store' })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.text();
+                })
+                .then(text => {
+                    if (text && text.length > lastLength) {
+                        const newText = text.substring(lastLength);
+                        lastLength = text.length;
+                        
+                        // Split by words to animate each word
+                        const words = newText.split(/(\s+)/);
+                        words.forEach(word => {
+                            if (word.trim() === '') {
+                                contentDiv.appendChild(document.createTextNode(word));
+                            } else {
+                                const span = document.createElement('span');
+                                span.className = 'token';
+                                span.textContent = word;
+                                contentDiv.appendChild(span);
+                            }
+                        });
+                        
+                        // Scroll to bottom
+                        window.scrollTo(0, document.body.scrollHeight);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading content:', error);
+                    // Only show error on first attempt
+                    if (lastLength === 0) {
+                        contentDiv.textContent = 'Waiting for response to start...';
+                    }
+                });
+        }
+
+        // Load content every 100ms
+        setInterval(loadContent, 100);
+        
+        // Initial load
+        loadContent();
+    </script>
+</body>
+</html>

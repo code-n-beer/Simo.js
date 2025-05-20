@@ -1,8 +1,13 @@
 const axios = require('axios').default;
-const fs = require('fs')
+const fs = require('fs');
+const path = require('path');
 const moment = require('moment');
+const { Readable } = require('stream');
 
-const maximumMsgLength = 390
+const maximumMsgLength = 390;
+// Use environment variable or default to a path in the container
+const HTML_TEMPLATE_PATH = process.env.HTML_TEMPLATE_PATH || '../templates/streaming.html';
+const OUTPUT_DIR = '/simojs-data/html';
 
 let greentextifier = `
 function greentextify() {
@@ -37,42 +42,183 @@ function addHTML(inputStr) {
 }
 
 
-function processFileResult(result, client, channel) {
-		const timestamp = moment().format('YYYY-MM-DD---HH-mm-ss')
-		const promptStuff = result.replace(/ /g, '-').replace(/[^a-zA-Z0-9öäåÖÄÅ\-]+/g, '')
-		const filePromptSuffix = promptStuff.substring(0,100)
-		const resultFile = `${timestamp}--${filePromptSuffix}.html`
-		fs.writeFileSync(`/simojs-data/html/${resultFile}`, addHTML(result))
-		const resultPath = `http://gpt.prototyping.xyz/${resultFile}`
-		const ircResult = `${resultPath} ${result}`.trim().replace(/(\r\n|\n|\r)+/gm, " || ").substring(0,maximumMsgLength)
-		client.say(channel, ircResult)
+async function ensureDirectoryExists(directory) {
+    if (!fs.existsSync(directory)) {
+        fs.mkdirSync(directory, { recursive: true });
+    }
+}
+
+async function startStreamingResponse(prompt, client, channel) {
+    try {
+        // Ensure output directory exists
+        await ensureDirectoryExists(OUTPUT_DIR);
+        
+        const timestamp = moment().format('YYYY-MM-DD---HH-mm-ss');
+        const promptSlug = prompt.replace(/ /g, '-').replace(/[^a-zA-Z0-9öäåÖÄÅ\-]+/g, '').substring(0, 100);
+        const baseFilename = `${timestamp}--${promptSlug}`;
+        const htmlFile = `${baseFilename}.html`;
+        const txtFile = `${baseFilename}.txt`;
+        
+        const htmlPath = path.join(OUTPUT_DIR, htmlFile);
+        const txtPath = path.join(OUTPUT_DIR, txtFile);
+        
+        console.log(`Template path: ${HTML_TEMPLATE_PATH}`);
+        console.log(`Output directory: ${OUTPUT_DIR}`);
+        console.log(`Creating files: ${htmlPath} and ${txtPath}`);
+        
+        // Read template file
+        let htmlContent;
+        try {
+            htmlContent = fs.readFileSync(HTML_TEMPLATE_PATH, 'utf8');
+        } catch (err) {
+            console.error(`Error reading template file (${HTML_TEMPLATE_PATH}):`, err);
+            // Fallback to a basic template if file read fails
+            htmlContent = `<!DOCTYPE html><html><head><title>Streaming Response</title><style>body{font-family:monospace;white-space:pre-wrap;padding:20px;}</style></head><body><div id="content"></div><script>setInterval(()=>fetch(window.location.href.replace(/\.html$/,'.txt')).then(r=>r.text()).then(t=>document.getElementById('content').textContent=t),100)</script></body></html>`;
+        }
+        
+        // Write files
+        fs.writeFileSync(htmlPath, htmlContent);
+        fs.writeFileSync(txtPath, '');
+        
+        console.log(`Successfully created files`);
+        
+        const resultUrl = `http://gpt.prototyping.xyz/${htmlFile}`;
+        console.log(`Result URL: ${resultUrl}`);
+        
+        return {
+            htmlPath,
+            txtPath,
+            resultUrl
+        };
+    } catch (error) {
+        console.error('Error in startStreamingResponse:', error);
+        throw error;
+    }
+    
+    // Send the URL immediately
+    client.say(channel, `${resultUrl} (Streaming response started...)`);
+    
+    return {
+        htmlPath: `/simojs-data/html/${htmlFile}`,
+        txtPath: `/simojs-data/html/${txtFile}`,
+        resultUrl
+    };
+}
+
+function appendToFile(filePath, content) {
+    fs.appendFileSync(filePath, content, 'utf8');
 }
 
 
-var simogpt = function(client, channel, from, line) {
-    var url = "http://llama:8111/completion";
-
-    const msg = line.split(' ').slice(1).join(' ');
-
+async function streamLLMResponse(prompt, filePath) {
+    const url = "http://llama:8111/completion";
+    
     const payload = {
-        prompt: msg,
-        n_predict: 256,
-	repeat_penalty: 2.2,
+        prompt: prompt,
+        n_predict: 512,
+        repeat_penalty: 2.2,
+        stream: true
     };
 
-    axios.post(url, payload)
-        .then(response => {
-            const result = `${msg}${response.data.content}`;
-            if (result.length > maximumMsgLength) {
-                processFileResult(result, client, channel);
-            } else {
-                client.say(channel, result);
+    console.log(`Starting LLM streaming to ${filePath}`);
+    
+    try {
+        const response = await axios({
+            method: 'post',
+            url: url,
+            data: payload,
+            responseType: 'stream',
+            headers: {
+                'Content-Type': 'application/json'
             }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            client.say(channel, "An error occurred while processing your request.");
         });
+
+        return new Promise((resolve, reject) => {
+            let buffer = '';
+            let isFirstChunk = true;
+            
+            // Create a write stream to append to the file
+            const writeStream = fs.createWriteStream(filePath, { flags: 'a' });
+            
+            response.data.on('data', (chunk) => {
+                try {
+                    buffer += chunk.toString();
+                    const lines = buffer.split('\n');
+                    buffer = lines.pop(); // Save incomplete line for next chunk
+                    
+                    for (const line of lines) {
+                        if (!line.trim()) continue;
+                        
+                        try {
+                            if (line.startsWith('data: ')) {
+                                const data = line.substring(6).trim();
+                                if (data === '[DONE]') continue;
+                                
+                                const parsed = JSON.parse(data);
+                                if (parsed.content) {
+                                    // Write to the file
+                                    writeStream.write(parsed.content, 'utf8');
+                                    console.log('Appended chunk:', JSON.stringify(parsed.content));
+                                }
+                            }
+                        } catch (e) {
+                            console.error('Error processing line:', line, 'Error:', e);
+                        }
+                    }
+                } catch (e) {
+                    console.error('Error processing chunk:', e);
+                }
+            });
+
+            response.data.on('end', () => {
+                console.log('LLM stream ended');
+                writeStream.end();
+                resolve();
+            });
+
+            response.data.on('error', (err) => {
+                console.error('Stream error:', err);
+                writeStream.end();
+                reject(err);
+            });
+            
+            // Handle process termination
+            process.on('SIGINT', () => {
+                writeStream.end();
+                process.exit();
+            });
+        });
+    } catch (error) {
+        console.error('Error in streamLLMResponse:', error);
+        throw error;
+    }
+}
+
+var simogpt = async function(client, channel, from, line) {
+    const msg = line.split(' ').slice(1).join(' ');
+    
+    try {
+        // Start streaming response - this creates the HTML file and returns the URL
+        const { txtPath, resultUrl } = await startStreamingResponse(msg, client, channel);
+        
+        // Send the URL to the IRC channel immediately
+        client.say(channel, resultUrl);
+        console.log(`Started streaming response to ${resultUrl}`);
+        
+        // Start the LLM streaming in the background
+        streamLLMResponse(msg, txtPath)
+            .then(() => {
+                console.log(`Finished streaming response to ${resultUrl}`);
+            })
+            .catch(error => {
+                console.error('Error in streaming response:', error);
+                client.say(channel, `Error streaming response: ${error.message}`);
+            });
+            
+    } catch (error) {
+        console.error('Error in simogpt:', error);
+        client.say(channel, "An error occurred while processing your request.");
+    }
 };
 
 var simoq = function(client, channel, from, line) {
