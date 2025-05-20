@@ -5,6 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Streaming Response</title>
     <style>
+        #stream-status {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            padding: 5px 10px;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 4px;
+            font-size: 14px;
+            z-index: 1000;
+        }
+        .status-waiting { color: #ffcc00; }
+        .status-ongoing { color: #00ff00; }
+        .status-ended { color: #888888; }
+
         body {
             background-color: #1a1a1a;
             color: #00ff00;
@@ -57,6 +71,7 @@
     </style>
 </head>
 <body>
+    <div id="stream-status" class="status-waiting">Status: Waiting to start</div>
     <div id="content"></div>
     <a href="latest.html" class="latest-link">View Latest</a>
     <script>
@@ -69,9 +84,16 @@
         let initialLoadCompletedInstantly = false; 
         let previousFullFetchedText = null; // To store the full text from the previous fetch
         let isLatestPage = false; // Flag to identify if current page is latest.html
+        const streamStatusElement = document.getElementById('stream-status');
+
+        function updateStreamStatus(status) {
+            streamStatusElement.textContent = `Status: ${status}`;
+            streamStatusElement.className = `status-${status.toLowerCase()}`;
+        }
 
         // Function to show "Waiting for response..."
         function showWaitingMessage() {
+            updateStreamStatus('waiting');
             if (contentDiv.querySelector('.prompt-message') || contentDiv.textContent.trim() !== '') {
                 return;
             }
@@ -86,6 +108,7 @@
             const waitingMsg = contentDiv.querySelector('.prompt-message');
             if (waitingMsg) {
                 waitingMsg.remove();
+                updateStreamStatus('ongoing');
             }
         }
 
@@ -183,6 +206,7 @@
 
                         if (contentToProcess.includes("[STREAM_COMPLETE]")) {
                             streamCompleted = true;
+                            updateStreamStatus('ended');
                             initialLoadCompletedInstantly = true; 
                             if (!isLatestPage && intervalId) { clearInterval(intervalId); intervalId = null; }
 
@@ -226,6 +250,7 @@
 
                         if (textToRenderThisIteration.includes("[STREAM_COMPLETE]")) {
                             streamCompleted = true;
+                            updateStreamStatus('ended');
                             textToRenderThisIteration = textToRenderThisIteration.substring(0, textToRenderThisIteration.indexOf("[STREAM_COMPLETE]"));
                             applyAnimation = false; 
                             if (!isLatestPage && intervalId) { 
