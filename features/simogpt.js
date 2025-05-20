@@ -8,6 +8,7 @@ const maximumMsgLength = 390;
 // Use environment variable or default to a path in the container
 const HTML_TEMPLATE_PATH = '/templates/streaming.html';
 const OUTPUT_DIR = '/simojs-data/html';
+const LATEST_FILE = path.join(OUTPUT_DIR, 'latest.txt');
 
 let greentextifier = `
 function greentextify() {
@@ -83,6 +84,10 @@ async function startStreamingResponse(prompt, client, channel) {
         // Write files
         fs.writeFileSync(htmlPath, htmlContent);
         fs.writeFileSync(txtPath, '');
+        // Initialize latest.txt if it doesn't exist
+        if (!fs.existsSync(LATEST_FILE)) {
+            fs.writeFileSync(LATEST_FILE, '');
+        }
         
         console.log(`Successfully created files at ${htmlPath} and ${txtPath}`);
         
@@ -102,6 +107,8 @@ async function startStreamingResponse(prompt, client, channel) {
 
 function appendToFile(filePath, content) {
     fs.appendFileSync(filePath, content, 'utf8');
+    // Also append to latest.txt
+    fs.appendFileSync(LATEST_FILE, content, 'utf8');
 }
 
 
@@ -122,8 +129,9 @@ async function streamLLMResponse(prompt, filePath) {
         const completionMarker = "\n[STREAM_COMPLETE]\n";
         const styledPrompt = `[PROMPT]${prompt}[/PROMPT]`;
         
-        // Write the prompt with styling markers
+        // Write the prompt with styling markers to both files
         fs.writeFileSync(filePath, styledPrompt);
+        fs.writeFileSync(LATEST_FILE, styledPrompt);
         
         const response = await axios({
             method: 'post',
