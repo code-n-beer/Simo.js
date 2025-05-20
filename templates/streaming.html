@@ -67,7 +67,8 @@
         let streamCompleted = false;
         let intervalId = null; // To store the interval ID
         let initialLoadCompletedInstantly = false; 
-        let previousFullFetchedText = null; // New: To store the full text from the previous fetch
+        let previousFullFetchedText = null; // To store the full text from the previous fetch
+        let isLatestPage = false; // Flag to identify if current page is latest.html
 
         // Function to show "Waiting for response..."
         function showWaitingMessage() {
@@ -124,14 +125,15 @@
         }
 
         function loadContent() {
-            if (streamCompleted && !initialLoadCompletedInstantly) { 
-                if (intervalId) { clearInterval(intervalId); intervalId = null; }
+            // For non-latest pages, if stream is completed or was instantly loaded, stop polling.
+            if (!isLatestPage && (streamCompleted || initialLoadCompletedInstantly)) {
+                if (intervalId) {
+                    clearInterval(intervalId);
+                    intervalId = null;
+                }
                 return;
             }
-            if (initialLoadCompletedInstantly) { 
-                 if (intervalId) { clearInterval(intervalId); intervalId = null; }
-                return; 
-            }
+            // For latest.html, polling continues even if streamCompleted, for re-initialization check.
 
             const txtUrl = window.location.href.replace(/\.html$/, '.txt');
             
@@ -143,47 +145,59 @@
                     return response.text();
                 })
                 .then(text => {
-                    if (initialLoadCompletedInstantly) return; 
-                    if (streamCompleted && !initialLoadCompletedInstantly && intervalId) { 
-                        clearInterval(intervalId); intervalId = null; return;
+                    // If, for some reason, these flags were set by another process for a non-latest page
+                    if (!isLatestPage && (initialLoadCompletedInstantly || streamCompleted)) {
+                         if (intervalId) { clearInterval(intervalId); intervalId = null;}
+                         return;
                     }
-                    
-                    // --- New: Detect re-initialized .txt file ---
-                    if (previousFullFetchedText !== null && text !== null) {
-                        // Check if text is shorter or doesn't start with the previous full text
+
+                    // --- Re-initialization Check (runs for all pages on every successful fetch after the first) ---
+                    if (previousFullFetchedText !== null && typeof text === 'string') {
                         if (text.length < previousFullFetchedText.length || !text.startsWith(previousFullFetchedText)) {
                             console.log('Underlying .txt file appears to have been re-initialized. Reloading page.');
                             window.location.reload();
                             return; // Stop further processing for this fetch
                         }
                     }
-                    // Store the current full text for the next comparison if it's valid
-                    if (text !== null && typeof text !== 'undefined') {
+                    if (typeof text === 'string') { // Store current text for next check
                         previousFullFetchedText = text;
                     }
-                    // --- End of New Detection Logic ---
+                    // --- End Re-initialization Check ---
 
-                    // --- Initial Load Specific Logic (lastLength === 0 && text) ---
-                    if (lastLength === 0 && text) { 
-                        // No [RESET] check here anymore based on user clarification.
-                        // Check for [STREAM_COMPLETE] in the *entire initial text*
-                        if (text.includes("[STREAM_COMPLETE]")) {
+                    // If stream is "done" (either completed instantly or during prior streaming),
+                    // and it's not a re-initialization (which would have reloaded):
+                    // For latest.html: update lastLength and stop further rendering for this cycle.
+                    // For other pages: this state should have already stopped the interval.
+                    if (initialLoadCompletedInstantly || streamCompleted) {
+                        if (typeof text === 'string') {
+                            lastLength = text.length; // Keep lastLength current for next re-init check
+                        }
+                        return; 
+                    }
+                    
+                    // --- If we are here, stream is NOT YET marked as complete, AND this is not a re-initialization ---
+
+                    // --- Initial Full Load Specific Logic (lastLength === 0 and text is present) ---
+                    if (lastLength === 0 && typeof text === 'string' && text.length > 0) { 
+                        let contentToProcess = text; // Process the full text for initial load checks
+
+                        if (contentToProcess.includes("[STREAM_COMPLETE]")) {
                             streamCompleted = true;
                             initialLoadCompletedInstantly = true; 
-                            if (intervalId) { clearInterval(intervalId); intervalId = null; }
+                            if (!isLatestPage && intervalId) { clearInterval(intervalId); intervalId = null; }
 
-                            let contentToParse = text.substring(0, text.indexOf("[STREAM_COMPLETE]"));
+                            contentToProcess = contentToProcess.substring(0, contentToProcess.indexOf("[STREAM_COMPLETE]"));
                             
                             let promptText = "";
-                            let completionText = contentToParse; 
+                            let completionText = contentToProcess; 
 
                             const promptStartTag = "[PROMPT]";
                             const promptEndTag = "[/PROMPT]";
-                            if (contentToParse.startsWith(promptStartTag)) {
-                                const endPromptIdx = contentToParse.indexOf(promptEndTag, promptStartTag.length);
+                            if (contentToProcess.startsWith(promptStartTag)) {
+                                const endPromptIdx = contentToProcess.indexOf(promptEndTag, promptStartTag.length);
                                 if (endPromptIdx !== -1) {
-                                    promptText = contentToParse.substring(promptStartTag.length, endPromptIdx);
-                                    completionText = contentToParse.substring(endPromptIdx + promptEndTag.length);
+                                    promptText = contentToProcess.substring(promptStartTag.length, endPromptIdx);
+                                    completionText = contentToProcess.substring(endPromptIdx + promptEndTag.length);
                                 }
                             }
                             
@@ -197,15 +211,16 @@
                             lastLength = text.length; 
                             initialPromptProcessed = true; 
                             window.scrollTo(0, document.body.scrollHeight);
+                            // If it's latest.html, the interval continues. Otherwise, it was cleared above.
                             return; 
                         }
+                        // If no [STREAM_COMPLETE], it's the first chunk of an ongoing stream.
+                        // Regular ongoing stream logic below will handle it.
                     }
 
-                    // --- Regular ongoing stream processing ---
-                    if (text && text.length > lastLength) {
+                    // --- Regular Ongoing Stream Processing ---
+                    if (typeof text === 'string' && text.length > lastLength) {
                         let newTextFromServer = text.substring(lastLength);
-                        // No [RESET] check here anymore. The re-initialization check above handles fundamental changes.
-                        
                         let textToRenderThisIteration = newTextFromServer; 
                         let applyAnimation = true; 
 
@@ -213,7 +228,7 @@
                             streamCompleted = true;
                             textToRenderThisIteration = textToRenderThisIteration.substring(0, textToRenderThisIteration.indexOf("[STREAM_COMPLETE]"));
                             applyAnimation = false; 
-                            if (intervalId) { 
+                            if (!isLatestPage && intervalId) { 
                                 clearInterval(intervalId);
                                 intervalId = null;
                             }
@@ -247,7 +262,8 @@
                         }
                     }
                     
-                    if (streamCompleted && intervalId) {
+                    // Safety clear for non-latest pages if stream completed
+                    if (streamCompleted && !isLatestPage && intervalId) {
                         clearInterval(intervalId);
                         intervalId = null;
                     }
@@ -262,6 +278,11 @@
         }
 
         document.addEventListener('DOMContentLoaded', () => {
+            const pathName = window.location.pathname.toLowerCase();
+            const fileName = pathName.split('/').pop();
+            // Consider root path (empty fileName after split) also as 'latest.html' for flexibility
+            isLatestPage = (fileName === 'latest.html' || fileName === ''); 
+
             showWaitingMessage(); 
             loadContent(); 
             intervalId = setInterval(loadContent, 100); 
