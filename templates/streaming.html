@@ -2,6 +2,7 @@
 <html>
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Streaming Response</title>
     <style>
         body {
@@ -11,12 +12,17 @@
             padding: 20px;
             white-space: pre-wrap;
             line-height: 1.5;
+            margin: 0; /* Added for consistency */
+        }
+        #content {
+            outline: none; /* For potential focus without visible outline */
         }
         .token {
             display: inline-block;
             opacity: 0;
             transform: translateY(20px);
             animation: slideIn 0.3s forwards, fadeIn 0.3s forwards;
+            /* animation-delay is set by JS */
         }
         @keyframes slideIn {
             to { transform: translateY(0); }
@@ -24,131 +30,180 @@
         @keyframes fadeIn {
             to { opacity: 1; }
         }
-        .cursor {
-            display: inline-block;
-            width: 10px;
-            height: 20px;
-            background-color: #00ff00;
-            animation: blink 1s infinite;
-            margin-left: 2px;
-            vertical-align: middle;
+        .prompt-message { /* Style for the "Waiting..." message */
+            font-style: italic;
+            color: #00cc00; 
         }
-        @keyframes blink {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0; }
+        strong { /* For bolded prompt text */
+            font-weight: bold;
         }
     </style>
 </head>
 <body>
     <div id="content"></div>
-    <div id="cursor" class="cursor"></div>
     <script>
         const contentDiv = document.getElementById('content');
-        const cursor = document.getElementById('cursor');
-        let lastProcessedLength = 0;
-        let isProcessing = false;
+        let lastLength = 0; // Tracks total length of text received from server
+        let animationDelayCounter = 0;
+        let initialPromptProcessed = false;
+        let streamCompleted = false;
+        let intervalId = null; // To store the interval ID
 
-        function processContent(text) {
-            // Check for completion marker
-            if (text.includes('[STREAM_COMPLETE]')) {
-                text = text.split('[STREAM_COMPLETE]')[0];
-                cursor.style.display = 'none';
+        // Function to show "Waiting for response..."
+        function showWaitingMessage() {
+            // Only show if no prompt-message exists and contentDiv is effectively empty
+            if (contentDiv.querySelector('.prompt-message') || contentDiv.textContent.trim() !== '') {
+                return;
             }
-            
-            // Process [PROMPT] markers
-            return text.replace(/\[PROMPT\](.*?)\[\/PROMPT\]/gs, 
-                '<span style="font-style: italic">$1</span>');
+            const promptSpan = document.createElement('span');
+            promptSpan.className = 'prompt-message';
+            promptSpan.textContent = 'Waiting for response to start...';
+            contentDiv.appendChild(promptSpan);
         }
 
-        function updateContent() {
-            if (isProcessing) return;
-            isProcessing = true;
-            
-            const txtUrl = window.location.href.replace(/\.html$/, '.txt') + '?t=' + Date.now();
-            
-            fetch(txtUrl, { 
-                cache: 'no-store',
-                headers: {
-                    'Cache-Control': 'no-cache, no-store, must-revalidate',
-                    'Pragma': 'no-cache',
-                    'Expires': '0'
-                }
-            })
-            .then(response => {
-                if (!response.ok) throw new Error('Network response was not ok');
-                return response.text();
-            })
-            .then(text => {
-                if (!text || text.length <= lastProcessedLength) {
-                    isProcessing = false;
-                    return;
-                }
+        // Function to hide "Waiting for response..."
+        function hideWaitingMessage() {
+            const waitingMsg = contentDiv.querySelector('.prompt-message');
+            if (waitingMsg) {
+                waitingMsg.remove();
+            }
+        }
 
-                // Only process new content
-                const newContent = text.substring(lastProcessedLength);
-                lastProcessedLength = text.length;
+        function appendCharacters(textSegment, parentElement, isBold) {
+            hideWaitingMessage(); // Hide "Waiting..." message as soon as we append actual content
 
-                // Process the content (handles PROMPT tags)
-                const processedContent = processContent(newContent);
-                
-                // Add new content with animation
-                const tempDiv = document.createElement('div');
-                tempDiv.innerHTML = processedContent;
-                
-                // Animate new content
-                const words = [];
-                const processNode = (node) => {
-                    if (node.nodeType === Node.TEXT_NODE) {
-                        const text = node.textContent;
-                        const wordSpans = text.split(/(\s+)/).map(word => {
-                            if (!word.trim()) return document.createTextNode(word);
-                            const span = document.createElement('span');
-                            span.className = 'token';
-                            span.textContent = word;
-                            return span;
-                        });
-                        words.push(...wordSpans);
-                    } else if (node.nodeType === Node.ELEMENT_NODE) {
-                        const span = document.createElement(node.tagName.toLowerCase());
-                        Array.from(node.attributes).forEach(attr => {
-                            span.setAttribute(attr.name, attr.value);
-                        });
-                        Array.from(node.childNodes).forEach(processNode);
-                        words.push(span);
+            let currentTargetElement = parentElement;
+            let strongTag = null;
+
+            if (isBold) {
+                strongTag = document.createElement('strong');
+                parentElement.appendChild(strongTag); 
+                currentTargetElement = strongTag;
+            }
+
+            for (const char of textSegment) {
+                if (char === '\n') {
+                    currentTargetElement.appendChild(document.createElement('br'));
+                } else if (char.match(/\s/)) { // Any whitespace character
+                    currentTargetElement.appendChild(document.createTextNode(char));
+                } else { // Non-whitespace character, to be animated
+                    const span = document.createElement('span');
+                    span.className = 'token';
+                    span.textContent = char;
+                    span.style.animationDelay = `${animationDelayCounter * 0.03}s`; 
+                    currentTargetElement.appendChild(span);
+                    animationDelayCounter++;
+                }
+            }
+        }
+
+        function loadContent() {
+            if (streamCompleted) { // If stream already marked complete, stop fetching
+                if (intervalId) {
+                    clearInterval(intervalId);
+                    intervalId = null;
+                }
+                return;
+            }
+
+            const txtUrl = window.location.href.replace(/\.html$/, '.txt');
+            
+            fetch(txtUrl, { cache: 'no-store' })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
                     }
-                };
-                
-                Array.from(tempDiv.childNodes).forEach(processNode);
-                
-                // Add to DOM with animation
-                words.forEach(word => {
-                    contentDiv.appendChild(word);
-                    // Trigger animation
-                    if (word.classList && word.classList.contains('token')) {
-                        requestAnimationFrame(() => {
-                            word.style.opacity = '1';
-                            word.style.transform = 'translateY(0)';
-                        });
+                    return response.text();
+                })
+                .then(text => {
+                    if (streamCompleted) return; // Check again, in case completed while fetch was in flight
+
+                    if (text && text.length > lastLength) {
+                        let newTextFromServer = text.substring(lastLength);
+                        // This will be the text processed in this iteration, after tags are handled
+                        let textToRenderThisIteration = newTextFromServer; 
+
+                        // 1. Handle [STREAM_COMPLETE] tag first
+                        // This tag signals the absolute end of content.
+                        if (textToRenderThisIteration.includes("[STREAM_COMPLETE]")) {
+                            streamCompleted = true;
+                            // Take only the part before the tag
+                            textToRenderThisIteration = textToRenderThisIteration.substring(0, textToRenderThisIteration.indexOf("[STREAM_COMPLETE]"));
+                            if (intervalId) { // Clear interval immediately
+                                clearInterval(intervalId);
+                                intervalId = null;
+                            }
+                        }
+
+                        // 2. Handle Initial Prompt (only if not yet processed)
+                        if (!initialPromptProcessed) {
+                            // This condition means it's the very first segment of text we're processing from the server
+                            if (lastLength === 0) { 
+                                const promptStartTag = "[PROMPT]";
+                                const promptEndTag = "[/PROMPT]";
+                                
+                                if (textToRenderThisIteration.startsWith(promptStartTag)) {
+                                    const endPromptIdx = textToRenderThisIteration.indexOf(promptEndTag, promptStartTag.length);
+                                    if (endPromptIdx !== -1) {
+                                        // Prompt tags found, extract content
+                                        const promptContent = textToRenderThisIteration.substring(promptStartTag.length, endPromptIdx);
+                                        if (promptContent.length > 0) {
+                                            appendCharacters(promptContent, contentDiv, true); // Render prompt as BOLD
+                                        }
+                                        // Update textToRenderThisIteration to be the part *after* the prompt
+                                        textToRenderThisIteration = textToRenderThisIteration.substring(endPromptIdx + promptEndTag.length);
+                                        initialPromptProcessed = true;
+                                    } else {
+                                        // [PROMPT] found, but not [/PROMPT] in this first chunk.
+                                        // We'll assume the prompt is malformed or not fully present as expected.
+                                        // Mark prompt as "processed" to avoid re-checking, and the text will be rendered normally.
+                                        initialPromptProcessed = true;
+                                    }
+                                } else {
+                                     // First chunk of text, but doesn't start with [PROMPT]
+                                    initialPromptProcessed = true; // No prompt to process with special tags
+                                }
+                            } else {
+                                // This case should ideally not be hit if lastLength === 0 is the true gate for first text.
+                                // If it is, it means we are beyond the first chunk, so prompt processing is done.
+                                initialPromptProcessed = true;
+                            }
+                        }
+                        
+                        // 3. Append the remaining (or all of) textToRenderThisIteration as normal text
+                        if (textToRenderThisIteration.length > 0) {
+                            appendCharacters(textToRenderThisIteration, contentDiv, false); // Render as NORMAL
+                        }
+
+                        lastLength = text.length; // Update lastLength to the total length of text received from server
+                        
+                        // Scroll to bottom if any text was effectively added
+                        if (newTextFromServer.length > 0) { // Check original newTextFromServer for scrolling trigger
+                           window.scrollTo(0, document.body.scrollHeight);
+                        }
+                    }
+                    // If stream is now marked as complete, ensure interval is cleared (redundant if cleared above, but safe)
+                    if (streamCompleted && intervalId) {
+                        clearInterval(intervalId);
+                        intervalId = null;
+                    }
+
+                })
+                .catch(error => {
+                    console.error('Error loading content:', error);
+                    if (lastLength === 0 && !streamCompleted) { 
+                        showWaitingMessage(); // Show "Waiting..." if error on first attempt and no content yet
                     }
                 });
-                
-                // Position cursor at the end
-                cursor.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'end' });
-                isProcessing = false;
-            })
-            .catch(error => {
-                console.error('Error loading content:', error);
-                if (lastProcessedLength === 0) {
-                    contentDiv.textContent = 'Waiting for response to start...';
-                }
-                isProcessing = false;
-            });
         }
 
-        // Check for updates every 200ms
-        setInterval(updateContent, 200);
-        // Initial load
-        updateContent();
+        // Initial setup when the DOM is ready
+        document.addEventListener('DOMContentLoaded', () => {
+            showWaitingMessage(); // Show "Waiting..." message initially
+            loadContent(); // Initial call to fetch content
+            // Set up the interval to periodically fetch content
+            intervalId = setInterval(loadContent, 100); // User's original interval
+        });
     </script>
 </body>
 </html>
