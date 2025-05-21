@@ -188,7 +188,7 @@
         #generation-indicator-bar {
             position: absolute; /* Positioned by JS next to contentDiv */
             width: 3px; 
-            background-color: rgba(0, 80, 0, 0.5); /* Darker, subtle bar */
+            background-color: rgba(0, 40, 0, 0.5); /* Darker, subtle bar */
             display: none; /* Hidden by default */
             z-index: 2; /* Above scanlines and content's default, below status */
             transition: height 0.05s linear, top 0.05s linear; /* Fast, smooth size/pos changes */
@@ -199,19 +199,19 @@
             position: absolute;
             left: -0.5px; /* Center it slightly better on the 3px bar */
             width: 4px; /* Slightly wider than bar for effect */
-            height: 40px; 
+            height: 20px; 
             background-color: #00ff00;
             box-shadow: 0 0 5px #00ff00, 0 0 10px #00ff00, 0 0 15px #33ff33;
             border-radius: 3px;
             opacity: 0; /* Start invisible, fade in with bar */
-            animation: pulseUpDown 1.5s infinite ease-in-out; /* Faster pulse */
+            animation: pulseUpDown 3.0s infinite ease-in-out; /* Faster pulse */
             animation-play-state: paused; /* Paused by default */
             transition: opacity 0.3s ease-in-out;
         }
 
         @keyframes pulseUpDown {
             0% { top: 3%; opacity: 0.8; } /* Start slightly inset */
-            50% { top: calc(97% - 40px); opacity: 1; } /* 40px is height of pulse, end slightly inset */
+            50% { top: calc(97% - 20px); opacity: 1; } /* 40px is height of pulse, end slightly inset */
             100% { top: 3%; opacity: 0.8; }
         }
 
