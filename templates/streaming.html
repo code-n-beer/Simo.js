@@ -5,11 +5,56 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Streaming Response</title>
     <style>
+        body {
+            background-color: #1a1a1a;
+            color: #00ff00;
+            font-family: 'Courier New', monospace;
+            padding: 20px;
+            white-space: pre-wrap;
+            line-height: 1.5;
+            margin: 0;
+            position: relative;
+            overflow-x: hidden; 
+        }
+
+        /* Stronger animated scan line effect */
+        @keyframes subtleScanlineMove {
+            0% { background-position: 0 0; }
+            100% { background-position: 0 5px; } /* Moves by pattern height */
+        }
+
+        body::after {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-image: repeating-linear-gradient(
+                to bottom,
+                transparent,
+                transparent 3px,       /* 3px of transparent space */
+                rgba(0, 60, 0, 0.25) 3px, /* Darker, more opaque green line */
+                rgba(0, 60, 0, 0.25) 5px  /* Line is 2px thick */
+            );
+            z-index: 0; 
+            pointer-events: none;
+            opacity: 0.4; /* Overall opacity for the scan lines */
+            animation: subtleScanlineMove 15s linear infinite;
+            transition: opacity 0.8s ease-out; /* For finalization fade */
+        }
+        
+        /* Scanlines when stream has truly ended */
+        body.stream-truly-ended::after {
+            animation-play-state: paused;
+            opacity: 0.15; /* Further reduce scanline opacity */
+        }
+
+
         #stream-status {
             font-size: 14px;
-            order: 2; /* Will be the second item in the flex container */
+            order: 2;
         }
-        /* Status-specific text-shadows for a "screen glow" effect */
         .status-queue { 
             color: #ff9900; 
             text-shadow: 0 0 2px #ff9900, 0 0 4px rgba(255, 153, 0, 0.7); 
@@ -22,19 +67,46 @@
             color: #888888; 
             text-shadow: 0 0 2px #aaaaaa, 0 0 4px rgba(136, 136, 136, 0.7); 
         }
-
-        body {
-            background-color: #1a1a1a;
-            color: #00ff00;
-            font-family: 'Courier New', monospace;
-            padding: 20px;
-            white-space: pre-wrap;
-            line-height: 1.5;
-            margin: 0;
+        .status-error { /* Added for completeness */
+            color: #ff4444;
+            text-shadow: 0 0 2px #ff4444, 0 0 4px rgba(255, 68, 68, 0.7);
         }
+
+
         #content {
             outline: none;
+            position: relative; 
+            z-index: 1; 
+            padding-left: 5px; /* Small padding so indicator bar isn't flush */
         }
+
+        /* Finalization Glimmer for Content */
+        #content.finalizing-glimmer {
+            animation: finalizeGlimmer 0.8s ease-out forwards;
+        }
+
+        @keyframes finalizeGlimmer {
+            0% {
+                box-shadow: 0 0 0px rgba(50, 255, 50, 0);
+                filter: brightness(100%);
+            }
+            30% {
+                box-shadow: 0 0 20px 10px rgba(100, 255, 100, 0.7), 
+                            inset 0 0 15px 5px rgba(150, 255, 150, 0.5);
+                filter: brightness(175%);
+            }
+            60% {
+                box-shadow: 0 0 10px 5px rgba(50, 255, 50, 0.4),
+                            inset 0 0 8px 2px rgba(100, 255, 100, 0.3);
+                filter: brightness(130%);
+            }
+            100% {
+                box-shadow: 0 0 0px rgba(50, 255, 50, 0);
+                filter: brightness(100%);
+            }
+        }
+
+
         .token {
             display: inline-block;
             opacity: 0;
@@ -58,7 +130,7 @@
             position: fixed;
             top: 10px;
             right: 10px;
-            z-index: 1000;
+            z-index: 1000; 
             display: flex;
             align-items: center;
             background: rgba(0, 0, 0, 0.7);
@@ -71,22 +143,23 @@
             color: #00cc00;
             text-decoration: none;
             margin-right: 10px;
-            padding: 3px 8px; /* Slightly adjusted padding */
-            border: 1px solid #009900; /* Muted green border */
+            padding: 3px 8px;
+            border: 1px solid #009900;
             border-radius: 3px;
-            opacity: 0.9; /* Slightly less than full, but not too dim */
+            opacity: 0.9;
             transition: color 0.3s, border-color 0.3s, text-shadow 0.3s, box-shadow 0.3s, opacity 0.3s;
             cursor: pointer;
+            position: relative; 
+            z-index: 1; 
         }
 
         .latest-link:not(.glowing-button):hover {
-            color: #33ff33; /* Brighter green on hover */
-            border-color: #00dd00; /* Brighter border on hover */
+            color: #33ff33;
+            border-color: #00dd00;
             text-shadow: 0 0 5px rgba(0, 255, 0, 0.6);
             opacity: 1;
         }
 
-        /* Glowing effect for the button on latest.html */
         @keyframes pulseGlowButton {
             0% {
                 text-shadow: 0 0 2px #abffab, 0 0 4px #80ff80;
@@ -106,14 +179,47 @@
         }
 
         .glowing-button {
-            color: #d9ffd9; /* Bright text for glowing button */
+            color: #d9ffd9;
             animation: pulseGlowButton 2s infinite ease-in-out;
-            opacity: 1; /* Full opacity when glowing */
-            /* border-color is handled by the animation */
+            opacity: 1;
         }
+
+        /* Generation Indicator Bar Styles */
+        #generation-indicator-bar {
+            position: absolute; /* Positioned by JS next to contentDiv */
+            width: 3px; 
+            background-color: rgba(0, 80, 0, 0.5); /* Darker, subtle bar */
+            display: none; /* Hidden by default */
+            z-index: 2; /* Above scanlines and content's default, below status */
+            transition: height 0.05s linear, top 0.05s linear; /* Fast, smooth size/pos changes */
+            border-radius: 2px;
+        }
+
+        #indicator-pulse {
+            position: absolute;
+            left: -0.5px; /* Center it slightly better on the 3px bar */
+            width: 4px; /* Slightly wider than bar for effect */
+            height: 40px; 
+            background-color: #00ff00;
+            box-shadow: 0 0 5px #00ff00, 0 0 10px #00ff00, 0 0 15px #33ff33;
+            border-radius: 3px;
+            opacity: 0; /* Start invisible, fade in with bar */
+            animation: pulseUpDown 1.5s infinite ease-in-out; /* Faster pulse */
+            animation-play-state: paused; /* Paused by default */
+            transition: opacity 0.3s ease-in-out;
+        }
+
+        @keyframes pulseUpDown {
+            0% { top: 3%; opacity: 0.8; } /* Start slightly inset */
+            50% { top: calc(97% - 40px); opacity: 1; } /* 40px is height of pulse, end slightly inset */
+            100% { top: 3%; opacity: 0.8; }
+        }
+
     </style>
 </head>
 <body>
+    <div id="generation-indicator-bar"><div id="indicator-pulse"></div></div>
+
     <div class="status-container">
         <span id="stream-status" class="status-waiting">Status: Waiting to start</span>
         <a href="latest.html" class="latest-link">Autorefresh latest</a>
@@ -121,6 +227,9 @@
     <div id="content"></div>
     <script>
         const contentDiv = document.getElementById('content');
+        const indicatorBar = document.getElementById('generation-indicator-bar');
+        const indicatorPulse = indicatorBar ? indicatorBar.querySelector('#indicator-pulse') : null;
+        
         let lastLength = 0;
         let animationDelayCounter = 0;
         let initialPromptProcessed = false;
@@ -130,6 +239,7 @@
         let previousFullFetchedText = null;
         let isLatestPage = false;
         const streamStatusElement = document.getElementById('stream-status');
+        let isGenerating = false; // Tracks if stream is 'ongoing'
 
         function updateStreamStatus(status) {
             if (streamStatusElement) {
@@ -137,7 +247,66 @@
                 streamStatusElement.textContent = `Status: ${statusText}`;
                 streamStatusElement.className = `status-${status.toLowerCase()}`;
             }
+
+            if (status === 'ongoing') {
+                if (!isGenerating && indicatorBar && indicatorPulse) {
+                    indicatorBar.style.display = 'block';
+                    requestAnimationFrame(() => { // Ensure layout is stable before showing pulse
+                        indicatorPulse.style.opacity = '1';
+                        indicatorPulse.style.animationPlayState = 'running';
+                        updateIndicatorBarLayout(); // Initial position and height
+                    });
+                }
+                isGenerating = true;
+                document.body.classList.remove('stream-truly-ended'); // In case of restart
+            } else {
+                if (isGenerating && indicatorBar && indicatorPulse) {
+                    indicatorPulse.style.animationPlayState = 'paused';
+                    indicatorPulse.style.opacity = '0';
+                    setTimeout(() => {
+                        // Check isGenerating again in case stream restarted quickly
+                        if (!isGenerating && indicatorBar) indicatorBar.style.display = 'none';
+                    }, 300); // Duration of opacity transition for pulse
+                }
+                isGenerating = false;
+                if (status === 'ended' && streamCompleted) {
+                    triggerFinalizationEffect();
+                }
+                 if (status === 'error') { // Also hide indicator on error
+                    if (indicatorBar) indicatorBar.style.display = 'none';
+                }
+            }
         }
+        
+        function updateIndicatorBarLayout() {
+            if (!isGenerating || !indicatorBar || !contentDiv || !document.body.contains(contentDiv)) return;
+        
+            const contentRect = contentDiv.getBoundingClientRect();
+            // Position to the left of contentDiv
+            // Taking scroll position into account for absolute positioning within body
+            indicatorBar.style.top = (contentRect.top + window.scrollY) + 'px';
+            indicatorBar.style.left = (contentRect.left + window.scrollX - 10) + 'px'; // 10px left of content
+            indicatorBar.style.height = contentRect.height + 'px';
+        }
+
+        function triggerFinalizationEffect() {
+            if (contentDiv) {
+                contentDiv.classList.add('finalizing-glimmer');
+                document.body.classList.add('stream-truly-ended');
+
+                setTimeout(() => {
+                    contentDiv.classList.remove('finalizing-glimmer');
+                }, 800); // Match animation duration of glimmer
+            }
+            // Ensure light bar is off
+            if (indicatorBar) indicatorBar.style.display = 'none';
+            if (indicatorPulse) {
+                 indicatorPulse.style.animationPlayState = 'paused';
+                 indicatorPulse.style.opacity = '0';
+            }
+            isGenerating = false; 
+        }
+
 
         function showWaitingMessage() {
             if (contentDiv.querySelector('.prompt-message') || contentDiv.textContent.trim() !== '') {
@@ -189,6 +358,10 @@
                     currentTargetElement.appendChild(span);
                 }
             }
+            // After characters are appended, if generating, update indicator bar
+            if (isGenerating) {
+                requestAnimationFrame(updateIndicatorBarLayout);
+            }
         }
 
         function loadContent() {
@@ -232,7 +405,9 @@
 
                     if (initialLoadCompletedInstantly || streamCompleted) {
                         lastLength = text.length; 
-                        if (streamCompleted) updateStreamStatus('ended');
+                        if (streamCompleted && streamStatusElement.textContent !== 'Status: Ended') { // Avoid redundant calls
+                           updateStreamStatus('ended');
+                        }
                         return; 
                     }
                     
@@ -246,7 +421,7 @@
 
                         if (textForCurrentProcessing.includes("[STREAM_COMPLETE]")) {
                             streamCompleted = true;
-                            updateStreamStatus('ended');
+                            // updateStreamStatus('ended') will be called by the main logic below or if no new text
                             initialLoadCompletedInstantly = true; 
                             animateOutput = false; 
                             if (!isLatestPage && intervalId) { clearInterval(intervalId); intervalId = null; }
@@ -273,15 +448,19 @@
                         if (completionText.length > 0) {
                             appendCharacters(completionText, contentDiv, false, animateOutput);
                             if (!streamCompleted) updateStreamStatus('ongoing'); 
+                            else updateStreamStatus('ended'); // If stream completed in this first chunk
                             hasProcessedContentInThisIteration = true;
                         } else if (promptText.length > 0 && !streamCompleted) {
                             updateStreamStatus('queue');
+                        } else if (streamCompleted) { // Only prompt, but stream complete
+                             updateStreamStatus('ended');
                         } else if (!promptText.length && !completionText.length && !streamCompleted) {
                             updateStreamStatus('queue');
                         }
                         
                         lastLength = text.length; 
                         if (hasProcessedContentInThisIteration) window.scrollTo(0, document.body.scrollHeight);
+                        if (streamCompleted && !isLatestPage && intervalId) { clearInterval(intervalId); intervalId = null; }
                         return; 
                     }
 
@@ -294,12 +473,13 @@
 
                         if (textToRenderThisIteration.includes("[STREAM_COMPLETE]")) {
                             streamCompleted = true;
-                            updateStreamStatus('ended');
+                            // updateStreamStatus('ended') will be called after appending this chunk
                             textToRenderThisIteration = textToRenderThisIteration.substring(0, textToRenderThisIteration.indexOf("[STREAM_COMPLETE]"));
-                            applyAnimationForThisChunk = false; 
-                            if (!isLatestPage && intervalId) { 
-                                clearInterval(intervalId); intervalId = null;
-                            }
+                            // No animation for the very last chunk if it contains STREAM_COMPLETE
+                            // However, if there's text, it should still animate.
+                            // The logic for animateOutput/applyAnimationForThisChunk needs care.
+                            // For now, if streamCompleted, the finalization effect handles the "end".
+                            // Let's keep animation for the text itself.
                         }
                         
                         if (textToRenderThisIteration.length > 0) {
@@ -312,9 +492,16 @@
                         if (hasProcessedContentInThisIteration) window.scrollTo(0, document.body.scrollHeight);
                     }
                     
-                    if (streamCompleted && !isLatestPage && intervalId) {
-                        clearInterval(intervalId); intervalId = null;
+                    if (streamCompleted) {
+                        updateStreamStatus('ended'); // This will trigger finalization effects
+                        if (!isLatestPage && intervalId) {
+                            clearInterval(intervalId); intervalId = null;
+                        }
+                    } else if (lastLength === 0 && text.length === 0) { // Fetched empty .txt and not completed
+                        updateStreamStatus('queue');
                     }
+
+
                 })
                 .catch(error => {
                     console.error('Error loading content:', error);
@@ -330,7 +517,6 @@
             const fileName = pathName.split('/').pop();
             isLatestPage = (fileName === 'latest.html' || fileName === ''); 
 
-            // Add class for glowing button if on latest.html
             if (isLatestPage) {
                 const latestLinkButton = document.querySelector('.latest-link');
                 if (latestLinkButton) {
@@ -343,6 +529,13 @@
             
             loadContent(); 
             intervalId = setInterval(loadContent, 100); 
+
+            // Add resize listener for indicator bar
+            window.addEventListener('resize', () => {
+                if (isGenerating) {
+                    updateIndicatorBarLayout();
+                }
+            });
         });
     </script>
 </body>
