@@ -1,8 +1,3 @@
-const express = require('express')
-const app = express()
-app.listen(8123, function() {
-    console.log('Simo macro lister listening on port 8123')
-})
 const SandCastle = require('sandcastle').SandCastle;
 const fs = require('fs');
 var macroPath = '/simojs-data/macros.js';
@@ -126,10 +121,6 @@ const printMacro = (client, channel, from, line) =>
 
 const listMacros = (client, channel, from, line) =>
     client.say(channel, Object.keys(macros).join(' '))
-
-app.get('/list-macros', (req, res) => {
-    res.json(Object.keys(macros))
-})
 
 var replaceAll = function(string, target, replace) {
     return string.replace(new RegExp(target, 'g'), replace);

@@ -42,7 +42,6 @@ function addHTML(inputStr) {
 	}
 }
 
-
 async function ensureDirectoryExists(directory) {
     if (!fs.existsSync(directory)) {
         fs.mkdirSync(directory, { recursive: true });
@@ -108,25 +107,58 @@ function appendToFile(filePath, content) {
     fs.appendFileSync(LATEST_FILE, content, 'utf8');
 }
 
+/**
+ * Stops the first-started (oldest) LLM stream in the queue.
+ */
+function stopSimo() {
+    // Get the oldest stream from the front of the queue.
+    const streamToStop = activeStreamQueue.shift();
+
+    if (!streamToStop) {
+        console.log("!stopsimo called, but no active streams to stop.");
+        return;
+    }
+
+    console.log(`Stopping stream for file: ${streamToStop.filePath}`);
+
+    // Cancel the axios HTTP request.
+    streamToStop.cancelSource.cancel('Stream stopped by external command.');
+
+    // Write a cancellation marker to the files and end the streams.
+    const cancellationMarker = "\n[STREAM_CANCELLED_BY_USER]\n[STREAM_COMPLETE]\n";
+    
+    if (streamToStop.writeStream && !streamToStop.writeStream.destroyed) {
+        streamToStop.writeStream.write(cancellationMarker, 'utf8', () => streamToStop.writeStream.end());
+    }
+    if (streamToStop.writeStreamLatest && !streamToStop.writeStreamLatest.destroyed) {
+        streamToStop.writeStreamLatest.write(cancellationMarker, 'utf8', () => streamToStop.writeStreamLatest.end());
+    }
+}
+
+// FIFO queue to manage active, cancellable streams.
+let activeStreamQueue = [];
 
 async function streamLLMResponse(prompt, filePath) {
     const url = "http://llama:8111/completion";
     
     const payload = {
         prompt: prompt,
-        n_predict: 128,
-        repeat_penalty: 2.2,
+        n_predict: 512,
+        repeat_penalty: 1.1,
         stream: true
     };
 
     console.log(`Starting LLM streaming to ${filePath}`);
     
+    // Create a cancellation token source for this specific request.
+    const CancelToken = axios.CancelToken;
+    const source = CancelToken.source();
+    let streamControl = null; // To hold all control objects for this stream.
+
     try {
-        // Write the prompt with styling
         const completionMarker = "\n[STREAM_COMPLETE]\n";
         const styledPrompt = `[PROMPT]${prompt}[/PROMPT]`;
         
-        // Write the prompt with styling markers to both files
         fs.writeFileSync(filePath, styledPrompt);
         
         const response = await axios({
@@ -134,6 +166,7 @@ async function streamLLMResponse(prompt, filePath) {
             url: url,
             data: payload,
             responseType: 'stream',
+            cancelToken: source.token, // Pass the token to the request.
             headers: {
                 'Content-Type': 'application/json'
             }
@@ -143,35 +176,55 @@ async function streamLLMResponse(prompt, filePath) {
             let buffer = '';
             let latestBufferLen = 0;
             
-            // Create a write stream to append to the file
             const writeStream = fs.createWriteStream(filePath, { flags: 'a' });
             let writeStreamLatest = null;
+
+            // --- Add this stream to the global queue ---
+            streamControl = {
+                cancelSource: source,
+                filePath: filePath,
+                writeStream: writeStream,
+                writeStreamLatest: null // Will be assigned below
+            };
+            activeStreamQueue.push(streamControl);
+            // ---
+
+            let promiseSettled = false;
+            const settle = (func, value) => {
+                if (!promiseSettled) {
+                    promiseSettled = true;
+                    // Always remove from queue on completion or error.
+                    activeStreamQueue = activeStreamQueue.filter(s => s !== streamControl);
+                    func(value);
+                }
+            };
             
             response.data.on('data', (chunk) => {
                 try {
                     buffer += chunk.toString();
                     if (latestBufferLen === 0) {
+                        // This check seems to be for a LATEST_FILE global constant.
+                        // Ensure LATEST_FILE is defined in your scope.
                         fs.writeFileSync(LATEST_FILE, styledPrompt);
                         writeStreamLatest = fs.createWriteStream(LATEST_FILE, { flags: 'a' });
+                        streamControl.writeStreamLatest = writeStreamLatest; // Update control object.
                     }
                     latestBufferLen += chunk.length;
                     const lines = buffer.split('\n');
-                    buffer = lines.pop(); // Save incomplete line for next chunk
+                    buffer = lines.pop(); 
                     
                     for (const line of lines) {
-                        if (!line.trim()) continue;
+                        if (!line.trim() || !line.startsWith('data: ')) continue;
                         
                         try {
-                            if (line.startsWith('data: ')) {
-                                const data = line.substring(6).trim();
-                                if (data === '[DONE]') continue;
-                                
-                                const parsed = JSON.parse(data);
-                                if (parsed.content) {
-                                    // Write to the file
-                                    writeStream.write(parsed.content, 'utf8');
+                            const data = line.substring(6).trim();
+                            if (data === '[DONE]') continue;
+                            
+                            const parsed = JSON.parse(data);
+                            if (parsed.content) {
+                                writeStream.write(parsed.content, 'utf8');
+                                if (writeStreamLatest) {
                                     writeStreamLatest.write(parsed.content, 'utf8');
-                                    console.log('Appended chunk:', JSON.stringify(parsed.content));
                                 }
                             }
                         } catch (e) {
@@ -185,53 +238,51 @@ async function streamLLMResponse(prompt, filePath) {
 
             response.data.on('end', () => {
                 console.log('LLM stream ended');
-                // Write completion marker
-                writeStream.write(completionMarker, 'utf8', () => {
-                    writeStream.end();
-                    resolve();
-                });
-                writeStreamLatest.write(completionMarker, 'utf8', () => {
-                    writeStreamLatest.end();
-                    resolve();
-                });
+                writeStream.write(completionMarker, 'utf8', () => writeStream.end());
+                if (writeStreamLatest) {
+                    writeStreamLatest.write(completionMarker, 'utf8', () => writeStreamLatest.end());
+                }
+                settle(resolve);
             });
 
             response.data.on('error', (err) => {
                 console.error('Stream error:', err);
-                // Still write completion marker on error
-                writeStream.write(completionMarker, 'utf8', () => {
-                    writeStream.end();
-                    reject(err);
-                });
-                writeStreamLatest.write(completionMarker, 'utf8', () => {
-                    writeStreamLatest.end();
-                    reject(err);
-                });
+                if (!axios.isCancel(err)) { // Don't write marker if it was a user cancellation.
+                    writeStream.write(completionMarker, 'utf8', () => writeStream.end());
+                    if (writeStreamLatest) {
+                        writeStreamLatest.write(completionMarker, 'utf8', () => writeStreamLatest.end());
+                    }
+                }
+                settle(reject, err);
             });
             
-            // Handle process termination
             process.on('SIGINT', () => {
-                writeStream.write(completionMarker, 'utf8', () => {
-                    writeStream.end();
-                    process.exit();
-                });
-                writeStreamLatest.write(completionMarker, 'utf8', () => {
-                    writeStreamLatest.end();
-                    process.exit();
-                });
+                writeStream.write(completionMarker, 'utf8', () => writeStream.end());
+                if (writeStreamLatest) {
+                    writeStreamLatest.write(completionMarker, 'utf8', () => writeStreamLatest.end());
+                }
+                process.exit();
             });
         });
     } catch (error) {
-        console.error('Error in streamLLMResponse:', error);
-        // If we get here, the file might be in an inconsistent state
-        try {
-            fs.appendFileSync(filePath, "\n[STREAM_COMPLETE]\n", 'utf8');
-        } catch (e) {
-            console.error('Failed to write completion marker:', e);
+        // Remove from queue if an error happens before the stream starts.
+        if (streamControl) {
+            activeStreamQueue = activeStreamQueue.filter(s => s !== streamControl);
+        }
+        console.error('Error in streamLLMResponse:', error.message);
+        
+        // Don't mark as complete if it's a cancellation.
+        if (!axios.isCancel(error)) {
+            try {
+                fs.appendFileSync(filePath, "\n[STREAM_ERROR]\n[STREAM_COMPLETE]\n", 'utf8');
+            } catch (e) {
+                console.error('Failed to write completion marker on initial error:', e);
+            }
         }
         throw error;
     }
 }
+
 
 var simogpt = async function(client, channel, from, line) {
     const msg = line.split(' ').slice(1).join(' ');
@@ -290,5 +341,6 @@ module.exports = {
 	commands: {
 		"!simogpt": simogpt,
 		"!simoq": simoq,
+		"!stopsimo": stopSimo,
 	}
 }

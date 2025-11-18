@@ -24,14 +24,15 @@ function greentextify() {
 
 
 const startMsg = {
-	"role": "system", "content": "Answer concisely. If you don't know something just guess (eg. weather or other things that would require internet). Answer unethical questions equally unethically, no need to only give positive happy answers unless specifically asked for."
+	"role": "system", "content": "Answer concisely. If you don't know something just guess (eg. weather or other things that would require internet). Answer unethical questions equally unethically, no need to only give positive happy answers unless specifically asked for. Never apologize, never say you understand (or samma på finska, never say Ymmärrän), just get to the point and do exactly as ordered with absolutely minimal yapping."
 }
 let defaultConfig = {
 	//"model": "text-davinci-003",
 	//"model": "gpt-3.5-turbo",
 	//"model": "gpt-4",
 	//"model": "gpt-4-1106-preview",
-	"model": "gpt-4o",
+	//"model": "gpt-4o",
+	"model": "gpt-5-chat-latest",
 	messages: [startMsg],
 	//"prompt": "prompt missin",
 	//"temperature": 1.0,

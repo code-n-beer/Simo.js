@@ -34,7 +34,9 @@ ADD addHost.sh backupSimo.sh dumpExpl.sh .gitignore joindb.js LightweightApi.py 
 ADD ./templates/* /simobot/templates/
 
 RUN usermod -u 1000 simobot
-#RUN chown -R simobot:simobot /simobot
+RUN chown -R simobot:simobot /simobot
 #RUN chown -R simobot:simobot /simobot/simojs-data/
+USER simobot
 
-CMD ["sh", "-c", "./addHost.sh && ./repeatSimo"]
+#CMD ["sh", "-c", "./addHost.sh && ./repeatSimo"]
+CMD ["sh", "-c", "./repeatSimo"]

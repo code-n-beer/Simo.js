@@ -19,12 +19,13 @@ services:
      - influxdb
      - llama
     build: .
+    extra_hosts:
+    - "host.docker.internal:host-gateway"
     volumes:
       - "./simojs-data/:/simojs-data"
       - "./templates/:/templates"
     restart: always
     ports:
-     - "8123:8123"
      - "127.0.0.1:9229:9229"
 
   llama:  
