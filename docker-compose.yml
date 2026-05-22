@@ -2,22 +2,13 @@ version: '2'
 services:
 
   pythonsimo:
-    build: 
+    build:
       context: .
       dockerfile: Dockerfile_pythonsimo
     expose:
       - "8888"
     links:
       - redis
-    restart: always
-
-
-  ircdjs:
-    build:
-      context: .
-      dockerfile: Dockerfile_ircdjs
-    ports:
-      - "6667:6667"
     restart: always
 
   sandbox:
@@ -33,8 +24,6 @@ services:
      - redis
      - pythonsimo
      - influxdb
-       # - llama
-     - ircdjs
      - sandbox
     build: .
     extra_hosts:
@@ -46,24 +35,24 @@ services:
     ports:
      - "127.0.0.1:9229:9229"
 
-       #  llama:  
-       #    #image: ghcr.io/ggerganov/llama.cpp:server
-       #    image: ghcr.io/ggml-org/llama.cpp:server # new address
-       #    #command: -m /models/llamafi-combo-1k-Q5_1.gguf -c 128 --host 0.0.0.0 --port 8111 --threads 8 --mlock
-       #    #command: -m /models/llamafi-combo-1k-Q5_1.gguf -c 128 --host 0.0.0.0 --port 8111 --threads 8 --mlock
-       #    #command: -m /models/viking-13b-q6_k.gguf -c 128 --host 0.0.0.0 --port 8111 --threads 8 --mlock
-       #    command: -m /models/viking-13b-q5_k_m.gguf -c 128 --host 0.0.0.0 --port 8111 --threads 8 --mlock
-       #    #command: -m /models/finnish-llama2-v0.2-Q5_1.gguf -c 128 --host 0.0.0.0 --port 8111 --threads 8 --mlock
-       #    volumes:
-       #      - "./models:/models"
-       #    ports:
-       #      - "8111:8111"
-       #    restart: always
-       #    ulimits:
-       #      memlock:
-       #        soft: -1  # Allow unlimited locked memory (or a specific large value)
-       #        hard: -1  # Allow unlimited locked memory (or a specific large value)
-
+  # llama is excluded from the default `docker compose up` via the profile.
+  # To start it, place a model file under ./models/ and run:
+  #   docker compose --profile llama up
+  # Used by !simogpt and !simoq features.
+  llama:
+    image: ghcr.io/ggml-org/llama.cpp:server
+    command: -m /models/viking-13b-q5_k_m.gguf -c 128 --host 0.0.0.0 --port 8111 --threads 8 --mlock
+    volumes:
+      - "./models:/models"
+    ports:
+      - "8111:8111"
+    restart: always
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    profiles:
+      - llama
 
   redis:
     restart: always
@@ -78,26 +67,3 @@ services:
     container_name: influxdb
     volumes:
       - "./influxdb_data:/var/lib/influxdb"
-
-# GPU llama
-# llama:  # Service name acts as hostname within the network
-#   image: ghcr.io/ggerganov/llama.cpp:server-cuda
-#   command: -m /models/llamafi-combo-1k-Q5_1.gguf -c 256 --host 0.0.0.0 --port 8111 --threads 8 --mlock --n-gpu-layers 99
-#   #command: -m /models/finnish-llama2-v0.2-Q5_1.gguf -c 128 --host 0.0.0.0 --port 8111 --threads 8 --mlock
-#   volumes:
-#     - "./models:/models"  # Adjust this according to your actual models directory
-#   ports:
-#     - "8111:8111"
-#   restart: always
-#   deploy:
-#     resources:
-#       reservations:
-#         devices:
-#           - driver: nvidia
-#             count: 1
-#             capabilities: [gpu]
-#       limits:
-#         memory: 8G
-#   memswap_limit: 8G
-#   environment:
-#       - NVIDIA_VISIBLE_DEVICES=all

@@ -15,18 +15,24 @@ mkdir -p simojs-data/html pythonsimo-data
 touch pythonsimo-data/placeholder
 echo '{}' > simojs-data/macros.js
 
-# Start (skip llama — it needs a model file)
+# Start
 docker-compose up --no-deps redis sandbox pythonsimo simojs
 
 # Tail logs
 docker-compose logs -f simojs
 ```
 
-For local development without a real IRC server, point `settings.json` at `ircdjs` and include it:
+`docker-compose.override.yml` is automatically merged and adds `ircdjs` for local dev. For local development without a real IRC server, point `settings.json` at it:
 
 ```bash
 # In simojs-data/settings.json: "server": "ircdjs", "channels": ["#simo"], "botnick": "Simo"
-docker-compose up --no-deps ircdjs redis sandbox pythonsimo simojs
+docker-compose up --no-deps redis sandbox pythonsimo simojs ircdjs
+```
+
+Production deployments should skip the override:
+
+```bash
+docker compose -f docker-compose.yml up
 ```
 
 The `simojs-data/` directory is mounted into the container at `/simojs-data/` and holds runtime state: `settings.json`, `macros.js`, SQLite DB, and generated HTML output.
@@ -102,7 +108,7 @@ See `features/example.js` for the minimal template. Multiple features can regist
 |---------|---------|
 | `simojs` | Main IRC bot (Node.js 18) |
 | `sandbox` | Sandcastle eval service (Node.js 8) — handles `!run` and user macros |
-| `ircdjs` | Local IRC server for development only — not used in production |
+| `ircdjs` | Local IRC server — defined in `docker-compose.override.yml`, not used in production |
 | `pythonsimo` | Python companion at port 8888; handles commands unknown to the JS side |
 | `redis` | Data store (used by pythonsimo) |
 | `influxdb` | Metrics storage (v1.8) |
