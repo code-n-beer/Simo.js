@@ -334,9 +334,6 @@ var simoq = function(client, channel, from, line) {
         });
 };
 
-
-
-
 module.exports = {
 	name: "simogpt", //not required atm iirc 
 	commands: {
