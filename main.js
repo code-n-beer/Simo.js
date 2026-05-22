@@ -1,7 +1,6 @@
 const irc = require('irc-upd');
 
 const fs = require('fs');
-const _ = require('underscore');
 const macroPath = '/simojs-data/macros.js'
 
 const features = require('./features/index.js').enabledFeatures;
@@ -15,8 +14,6 @@ settings = JSON.parse(settings);
 const TimerPoller = require('./lib/timerpoller').TimerPoller;
 const MultiCommand = require('./lib/multicommand').MultiCommand;
 const UrlTitle = require('./lib/urltitle').UrlTitle;
-
-const sendMetric = require('./lib/simoInflux').sendMetric;
 
 var config = {
     server: settings.general.server,
@@ -63,10 +60,6 @@ var multicommand = new MultiCommand(commands, 100);
 var urltitle = new UrlTitle();
 
 client.addListener('message', function(from, to, message) {
-    //console.log("from: " + from);
-    //console.log("to: " + to);
-    //console.log("message: " + message);
-
     var msg = message.toLowerCase();
     //In case of a query, send the msg to the querier instead of ourselves
     if (to.indexOf("#") === -1) {
@@ -95,13 +88,6 @@ client.addListener('message', function(from, to, message) {
                 client.say(to, title);
             });
         } else {
-            const messageParts = message.split(" ");
-            let value = 0;
-            if (messageParts.length === 2) {
-                value = messageParts[1];
-            }
-            // sendMetric("macro_invocation", value, "user:" + from + ",macro:" + messageParts[0]);
-
             // expand user hypermacros (!*name) if present
             if (~message.indexOf('!*')) {
                 const macroFile = fs.readFileSync(macroPath);
@@ -144,4 +130,3 @@ client.connect(function() {
 setTimeout(
     () => commands['!twitter'][0](client, config.channels[0], "startup", ""),
     3000);
-// ^ nice.
