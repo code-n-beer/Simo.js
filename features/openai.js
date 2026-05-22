@@ -259,5 +259,4 @@ module.exports = {
         '!gptfp': gptFilePrompt,
         '!gpt_raw': gpt_raw,
     },
-    gpt_raw_call,
 }
