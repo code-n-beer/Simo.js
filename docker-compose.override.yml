@@ -1,0 +1,17 @@
+version: '2'
+# Local development overrides — automatically merged by docker compose.
+# Adds ircdjs so the bot can connect to a local IRC server instead of a real network.
+# Not used in production (deploy with: docker compose -f docker-compose.yml up)
+services:
+
+  ircdjs:
+    build:
+      context: .
+      dockerfile: Dockerfile_ircdjs
+    ports:
+      - "6667:6667"
+    restart: always
+
+  simojs:
+    links:
+      - ircdjs
