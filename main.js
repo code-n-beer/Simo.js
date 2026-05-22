@@ -88,52 +88,48 @@ client.addListener('message', function(from, to, message) {
     }
     try {
         if (msg.indexOf('!') !== 0) {
-            console.log('going to call urltitle')
             urltitle.getTitle(message, function(title) {
                 if (!title) {
                     return;
                 }
                 client.say(to, title);
             });
-            message = `!*r ${to} ${from} ${message}`
         } else {
             const messageParts = message.split(" ");
             let value = 0;
             if (messageParts.length === 2) {
                 value = messageParts[1];
             }
-            sendMetric("macro_invocation", value, "user:" + from + ",macro:" + messageParts[0]);
+            // sendMetric("macro_invocation", value, "user:" + from + ",macro:" + messageParts[0]);
 
-            message = `!*c ${to} ${from} ${message}`
-        }
-
-        // hypermacros
-        if (~message.indexOf('!*')) {
-            const macroFile = fs.readFileSync(macroPath);
-            macros = JSON.parse(macroFile);
-            message = macrofy(message, 0);
-            function macrofy(msg, depth) {
-                if (depth > 100) return "stack level too deep, giving up"
-                if (!~msg.indexOf('!*')) return msg
-                return macrofy(msg.split(' ').map(word => {
-                        const cmd = word.slice(1)
-                        return cmd.indexOf('*') === 0 ?
-                            macros.hasOwnProperty(cmd) ?
-                            macros[cmd].split(' ').map(macro =>
-                                macros.hasOwnProperty(macro) ? '!' + macro : macro
-                            ).join(' ') :
-                            `{Unknown hypermacro: ${cmd}}` :
-                            word
-                    })
-                    .join(' '), depth + 1)
+            // expand user hypermacros (!*name) if present
+            if (~message.indexOf('!*')) {
+                const macroFile = fs.readFileSync(macroPath);
+                macros = JSON.parse(macroFile);
+                message = macrofy(message, 0);
+                function macrofy(msg, depth) {
+                    if (depth > 100) return "stack level too deep, giving up"
+                    if (!~msg.indexOf('!*')) return msg
+                    return macrofy(msg.split(' ').map(word => {
+                            const cmd = word.slice(1)
+                            return cmd.indexOf('*') === 0 ?
+                                macros.hasOwnProperty(cmd) ?
+                                macros[cmd].split(' ').map(macro =>
+                                    macros.hasOwnProperty(macro) ? '!' + macro : macro
+                                ).join(' ') :
+                                `{Unknown hypermacro: ${cmd}}` :
+                                word
+                        })
+                        .join(' '), depth + 1)
+                }
             }
-        }
 
-        multicommand.exec(to, from, message, function(result) {
-            if (!result)
-                return;
-            client.say(to, result.substring(0, 400));
-        });
+            multicommand.exec(to, from, message, function(result) {
+                if (!result)
+                    return;
+                client.say(to, result.substring(0, 400));
+            });
+        }
 
     } catch (err) {
         console.log(err);
