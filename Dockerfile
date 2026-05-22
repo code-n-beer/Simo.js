@@ -20,7 +20,7 @@ ADD ./lib/* ./lib/
 ADD ./macros/* /simobot/macros/
 ADD ./resources/* /simobot/resources/
 ADD ./features/* /simobot/features/
-ADD addHost.sh backupSimo.sh dumpExpl.sh .gitignore joindb.js LightweightApi.py main.js marker migrate-logs.js package.json README.md redis.conf repeatSimo settings.json.example settings_pythonsimo.cfg settings_pythonsimo.cfg.example simojs.sqlite telegraf.conf test.log testscript ./
+ADD addHost.sh backupSimo.sh dumpExpl.sh .gitignore joindb.js LightweightApi.py main.js marker migrate-logs.js package.json README.md redis.conf repeatSimo settings.json.example settings_pythonsimo.cfg settings_pythonsimo.cfg.example simojs.sqlite telegraf.conf ./
 ADD ./templates/* /simobot/templates/
 
 RUN chown -R simobot:simobot /simobot
