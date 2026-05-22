@@ -1,0 +1,82 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+jobs:
+  build:
+    name: Build Docker images
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Prepare runtime files
+        run: |
+          mkdir -p simojs-data/html
+          cp settings.json.example simojs-data/settings.json
+          # Override IRC server to point at the ircdjs container
+          python3 -c "
+          import json
+          s = json.load(open('simojs-data/settings.json'))
+          s['general']['server'] = 'ircdjs'
+          s['general']['channels'] = ['#simo']
+          s['general']['botnick'] = 'Simo'
+          json.dump(s, open('simojs-data/settings.json', 'w'), indent=4)
+          "
+          echo '{}' > simojs-data/macros.js
+          cp settings_pythonsimo.cfg.example settings_pythonsimo.cfg
+          mkdir -p pythonsimo-data && touch pythonsimo-data/placeholder
+
+      - name: Build images
+        run: docker compose build ircdjs sandbox simojs
+
+  integration-tests:
+    name: IRC integration tests
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Prepare runtime files
+        run: |
+          mkdir -p simojs-data/html
+          cp settings.json.example simojs-data/settings.json
+          python3 -c "
+          import json
+          s = json.load(open('simojs-data/settings.json'))
+          s['general']['server'] = 'ircdjs'
+          s['general']['channels'] = ['#simo']
+          s['general']['botnick'] = 'Simo'
+          json.dump(s, open('simojs-data/settings.json', 'w'), indent=4)
+          "
+          echo '{}' > simojs-data/macros.js
+          cp settings_pythonsimo.cfg.example settings_pythonsimo.cfg
+          mkdir -p pythonsimo-data && touch pythonsimo-data/placeholder
+
+      - name: Start services
+        run: docker compose up --build -d ircdjs sandbox simojs
+
+      - name: Wait for bot to connect
+        run: |
+          timeout 90 bash -c '
+            until docker compose logs simojs 2>/dev/null | grep -q "366 Simo"; do
+              sleep 2
+            done
+          '
+
+      - name: Run IRC integration tests
+        run: node test/runner.js
+
+      - name: Show service logs on failure
+        if: failure()
+        run: docker compose logs simojs sandbox ircdjs
+
+      - name: Stop services
+        if: always()
+        run: docker compose down
