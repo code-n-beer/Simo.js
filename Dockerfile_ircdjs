@@ -1,10 +1,10 @@
-FROM alpine:3.4
+FROM node:18-alpine
 
-RUN apk add --no-cache icu-dev nodejs git python make g++
+RUN apk add --no-cache icu-dev git python3 make g++
 RUN adduser -D nodejs
 USER nodejs
 WORKDIR /home/nodejs
-RUN npm install ircdjs && npm cache clear
+RUN npm install ircdjs && cd node_modules/ircdjs && npm install commander@2
 
 EXPOSE 6667
 
