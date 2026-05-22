@@ -1,0 +1,12 @@
+FROM node:8-slim
+
+RUN mkdir /sandbox
+ADD ./sandbox/package.json /sandbox/
+WORKDIR /sandbox
+RUN npm install
+
+ADD ./lib/api.js /sandbox/api.js
+ADD ./sandbox/server.js /sandbox/
+
+EXPOSE 3456
+CMD ["node", "server.js"]
