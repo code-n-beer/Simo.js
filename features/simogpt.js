@@ -334,6 +334,31 @@ var simoq = function(client, channel, from, line) {
         });
 };
 
+var gpt_raw_call = async function(prompt) {
+    const url = "http://llama:8111/completion";
+
+    const payload = {
+        prompt: prompt,
+        n_predict: 512,
+        repeat_penalty: 1.1,
+    };
+
+    const response = await axios.post(url, payload);
+    return `${response.data.content}`;
+};
+
+var gpt_raw = async function(client, channel, from, line) {
+    const msg = line.split(' ').slice(1).join(' ');
+
+    try {
+        const result = await gpt_raw_call(msg);
+        client.say(channel, result);
+        return result;
+    } catch (error) {
+        console.error('Error:', error);
+        client.say(channel, "An error occurred while processing your request.");
+    }
+};
 
 
 
@@ -343,5 +368,7 @@ module.exports = {
 		"!simogpt": simogpt,
 		"!simoq": simoq,
 		"!stopsimo": stopSimo,
-	}
+		"!gpt_raw": gpt_raw,
+	},
+	gpt_raw_call,
 }

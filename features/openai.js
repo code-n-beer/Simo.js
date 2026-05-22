@@ -227,26 +227,6 @@ function gptImageFile(client, channel, from, line) {
 
 
 
-async function gpt_raw_call(prompt) {
-    const req = prepMsg(prompt, 1024);
-    const res = await axios.post(endpoint, req, headers);
-    const result = res.data.choices[0].message.content;
-    defaultConfig.messages.push(res.data.choices[0].message);
-    return result;
-}
-
-async function gpt_raw(client, channel, from, line) {
-    const input = line.split(' ').slice(1).join(' ');
-    try {
-        const result = await gpt_raw_call(input);
-        client.say(channel, result);
-        return result;
-    } catch (e) {
-        console.log('error gpt_raw', e);
-        client.say(channel, `Error: ${e.message}`);
-    }
-}
-
 module.exports = {
     name: 'test', //not required atm iirc
     commands: {
@@ -257,7 +237,5 @@ module.exports = {
         '!gpti': gptImage,
         '!gptif': gptImageFile,
         '!gptfp': gptFilePrompt,
-        '!gpt_raw': gpt_raw,
     },
-    gpt_raw_call,
 }
