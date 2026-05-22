@@ -1,22 +1,9 @@
-const express = require('express')
-const app = express()
-app.listen(8123, function() {
-    console.log('Simo macro lister listening on port 8123')
-})
-
-
-
-
-const SandCastle = require('sandcastle').SandCastle;
+const axios = require('axios');
 const fs = require('fs');
 var macroPath = '/simojs-data/macros.js';
 const concat = require('../lib/concat.js');
-var sbox = new SandCastle({
-    cwd: __dirname,
-    api: __dirname + '/../lib/api.js',
-    memoryLimitMB: 128,
-    timeout: 10000,
-});
+
+const SANDBOX_URL = 'http://sandbox:3456/run';
 
 var macros = {};
 var init = function(config) {
@@ -24,76 +11,64 @@ var init = function(config) {
     macros = JSON.parse(macroFile);
 }
 
-app.get('/list-macros', (req, res) => {
-    res.json(Object.keys(macros))
-})
-
 var run = function(client, channel, from, line) {
 
     const runScript = (line) => {
-        var script = sbox.createScript("exports.main = function() {" + line + "}");
-
-        script.on('exit', function(err, output) {
-            console.log('err: ' + err);
-            console.log('output: ' + output);
-            if (!err) {
-                res = output instanceof Object ? JSON.stringify(output) : String(output)
+        axios.post(SANDBOX_URL, { code: line, arg: lineArr.join(' ') }, { timeout: 12000 })
+            .then(response => {
+                const { result, error } = response.data;
+                if (error) {
+                    client.say(channel, error.toString());
+                    return;
+                }
+                var res = result instanceof Object ? JSON.stringify(result) : String(result);
                 if (!client.isMock) {
                     res = res.substring(0, 10000);
                 }
                 res = res.replace(/(\r\n|\n|\r)/gm, ' ');
                 res = res.replace(/^"/, '');
                 res = res.replace(/"$/, '');
-                res = res.length ? res : 'script returned empty string'
+                res = res.length ? res : 'script returned empty string';
                 if (!~res.indexOf('[OO HILJAA]'))
-                    client.say(channel, macroName[0] === '_' ? concat(res, lineArr.join(" ")) : res);
-            } else {
-                res = err.toString();
-                client.say(channel, res);
-            }
-        });
-        script.on('timeout', function() {
-            console.log('script timed out');
-            client.say(channel, 'script timed out');
-        });
-
-        script.run({
-            arg: lineArr.join(" ")
-        });
+                    client.say(channel, macroName[0] === '_' ? concat(res, lineArr.join(' ')) : res);
+            })
+            .catch(err => {
+                client.say(channel, 'sandbox error: ' + err.message);
+            });
     }
 
     line = line.substring('!run '.length);
-    var lineArr = line.split(" ");
-    let macroName = ''
+    var lineArr = line.split(' ');
+    let macroName = '';
     if (macros.hasOwnProperty(lineArr[0])) {
-        macroName = lineArr.shift()
+        macroName = lineArr.shift();
         line = macros[macroName];
     }
 
-    const innerMacro = line.match(/!([\+_][a-ö]+)(\$\$(.*)\$\$)?/)
+    const innerMacro = line.match(/!([\+_][a-ö]+)(\$\$(.*)\$\$)?/);
     if (innerMacro && macros.hasOwnProperty(innerMacro[1])) {
-        const lineMock = '!run ' + (innerMacro[3] ? innerMacro[1] + ' ' + innerMacro[3] : innerMacro[1])
+        const lineMock = '!run ' + (innerMacro[3] ? innerMacro[1] + ' ' + innerMacro[3] : innerMacro[1]);
         const clientMock = {
             isMock: true,
             say: (_, res) => {
-                res = isNaN(parseFloat(res)) ? `"${res}"` : res
-                runScript(line.replace(innerMacro[0], res))
+                res = isNaN(parseFloat(res)) ? `"${res}"` : res;
+                runScript(line.replace(innerMacro[0], res));
             }
-        }
-        run(clientMock, '', '', lineMock)
+        };
+        run(clientMock, '', '', lineMock);
     } else {
-        runScript(line)
+        runScript(line);
     }
 }
 
 var addMacro = function(name, script, callback) {
     if (!['_', '+', '*'].includes(name[0])) {
-        callback('error: macro names must begin with \'+\',\'*\', or \'_\'')
-        return
+        callback('error: macro names must begin with \'+\',\'*\', or \'_\'');
+        return;
     }
     if (script.split(' ').includes(name)) {
-        callback('error: recursion not allowed in macros')
-        return
+        callback('error: recursion not allowed in macros');
+        return;
     }
     macros[name] = script;
     writeMacros(callback);
@@ -129,20 +104,17 @@ var delMacro = function(client, channel, from, line) {
         client.say(channel, 'removed');
     });
 }
+
 const printMacro = (client, channel, from, line) =>
-    client.say(channel, macros[line.split(' ')[1]])
+    client.say(channel, macros[line.split(' ')[1]]);
 
 const listMacros = (client, channel, from, line) =>
-    client.say(channel, Object.keys(macros).join(' '))
-
-var replaceAll = function(string, target, replace) {
-    return string.replace(new RegExp(target, 'g'), replace);
-}
+    client.say(channel, Object.keys(macros).join(' '));
 
 module.exports = {
-    name: "eval in a sandbox", //not required atm iirc 
+    name: 'eval in a sandbox',
     commands: {
-        "!run": run,
+        '!run': run,
         '!addmacro': newMacro,
         '!delmacro': delMacro,
         '!printmacro': printMacro,
