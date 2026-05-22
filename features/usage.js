@@ -1,11 +1,9 @@
-const usage = require('usage');
-
 var sys_usage = function(client, channel, from, line) {
-    usage.lookup(process.pid, function(err, result) {
-        var ret = "Simo is using: " + result.cpu + "% of the CPU and " + result.memory / 1000000 + "MB of memory."
-        client.say(channel, ret);
-
-    });
+    const mem = process.memoryUsage();
+    const cpu = process.cpuUsage();
+    const heapMB = (mem.heapUsed / 1024 / 1024).toFixed(1);
+    const rssMB = (mem.rss / 1024 / 1024).toFixed(1);
+    client.say(channel, `Simo memory: ${heapMB}MB heap, ${rssMB}MB rss`);
 }
 
 module.exports = {
