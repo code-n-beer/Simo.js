@@ -1,6 +1,6 @@
 {
     "general":
-    {    
+    {
         "server": "localhost",
         "channels": ["#channel"],
         "botnick": "BotName",
@@ -29,10 +29,27 @@
     },
     "email":
     {
-      "fileUrl": "./emailtemplate"
+      "fileUrl": "./emailtemplate",
+      "filePath": "./emailtemplate"
     },
     "azure":
     {
       "vision": ""
+    },
+    "openai":
+    {
+      "api_key": ""
+    },
+    "stablediffusionReplicate":
+    {
+      "api_key": ""
+    },
+    "dalle":
+    {
+      "api_key": ""
+    },
+    "stabilityAI":
+    {
+      "api_key": ""
     }
 }
