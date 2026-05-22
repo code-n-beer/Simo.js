@@ -1,3 +1,12 @@
+const express = require('express')
+const app = express()
+app.listen(8123, function() {
+    console.log('Simo macro lister listening on port 8123')
+})
+
+
+
+
 const SandCastle = require('sandcastle').SandCastle;
 const fs = require('fs');
 var macroPath = '/simojs-data/macros.js';
@@ -14,6 +23,10 @@ var init = function(config) {
     var macroFile = fs.readFileSync(macroPath);
     macros = JSON.parse(macroFile);
 }
+
+app.get('/list-macros', (req, res) => {
+    res.json(Object.keys(macros))
+})
 
 var run = function(client, channel, from, line) {
 
