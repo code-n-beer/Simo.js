@@ -12,12 +12,30 @@ services:
     restart: always
 
 
+  ircdjs:
+    build:
+      context: .
+      dockerfile: Dockerfile_ircdjs
+    ports:
+      - "6667:6667"
+    restart: always
+
+  sandbox:
+    build:
+      context: .
+      dockerfile: Dockerfile_sandbox
+    expose:
+      - "3456"
+    restart: always
+
   simojs:
     links:
      - redis
      - pythonsimo
      - influxdb
        # - llama
+     - ircdjs
+     - sandbox
     build: .
     extra_hosts:
     - "host.docker.internal:host-gateway"
@@ -56,7 +74,7 @@ services:
       - "./redis-data/:/redis-data"
 
   influxdb:
-    image: influxdb:latest
+    image: influxdb:1.8
     container_name: influxdb
     volumes:
       - "./influxdb_data:/var/lib/influxdb"
