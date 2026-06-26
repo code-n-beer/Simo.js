@@ -5,7 +5,7 @@ const axios = require('axios'),
     FormData = require('form-data'),
     apiHost = 'https://api.stability.ai';
 
-const resultAddr = `https://gpt.prototyping.xyz`
+const resultAddr = `https://gpt.prototyping.xyz:8080`
 const outputPath = `/simojs-data/html`
 
 let token = JSON.parse(fs.readFileSync('/simojs-data/settings.json')).stabilityAI.api_key

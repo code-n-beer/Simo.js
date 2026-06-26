@@ -90,7 +90,7 @@ async function startStreamingResponse(prompt, client, channel) {
         
         console.log(`Successfully created files at ${htmlPath} and ${txtPath}`);
         
-        const resultUrl = `http://gpt.prototyping.xyz:8080/${htmlFile}`;
+        const resultUrl = `https://gpt.prototyping.xyz:8080/${htmlFile}`;
         console.log(`Result URL: ${resultUrl}`);
         
         return {

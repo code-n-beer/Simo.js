@@ -14,7 +14,7 @@ let defaultHeaders = {
 	headers: authHeader
 }
 
-const resultAddr = `http://gpt.prototyping.xyz`
+const resultAddr = `https://gpt.prototyping.xyz:8080`
 const outputPath = `/simojs-data/html`
 
 function loopUntilReady(getUrl, say) {

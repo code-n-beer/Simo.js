@@ -164,7 +164,7 @@ function processFileResult(result, client, channel) {
 		const filePromptSuffix = promptStuff.substring(0,100)
 		const resultFile = `${timestamp}--${filePromptSuffix}.html`
 		fs.writeFileSync(`/simojs-data/html/${resultFile}`, addHTML(result))
-		const resultPath = `http://gpt.prototyping.xyz:8080/${resultFile}`
+		const resultPath = `https://gpt.prototyping.xyz:8080/${resultFile}`
 		const ircResult = `${resultPath} ${result}`.trim().replace(/(\r\n|\n|\r)+/gm, " || ").substring(0,maximumMsgLength)
 		client.say(channel, ircResult)
 }

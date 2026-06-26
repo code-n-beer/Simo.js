@@ -5,7 +5,7 @@ const { v4: uuidv4 } = require('uuid');
 function fixResult(r) {
 	let result = Object.assign({}, r.data)
 	result.output = result.output.replace('\n', '|').substr(0, 300)
-	result.filename = 'http://gpt.prototyping.xyz/' + result.filename
+	result.filename = 'https://gpt.prototyping.xyz:8080/' + result.filename
 	return result
 }
 
