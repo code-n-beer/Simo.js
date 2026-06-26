@@ -126,7 +126,3 @@ client.connect(function() {
    new TimerPoller(client, 30);
 });
 
-// Start twitter stream on connect
-setTimeout(
-    () => commands['!twitter'][0](client, config.channels[0], "startup", ""),
-    3000);

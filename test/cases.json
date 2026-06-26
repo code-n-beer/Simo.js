@@ -3,17 +3,26 @@
   { "cmd": "!run exit(moment().format('YYYY'))",        "expect": "20\\d\\d", "desc": "moment global in sandbox" },
 
   { "cmd": "!addmacro +citest exit(arg * 2)",           "expect": "added macro", "desc": "add + macro (takes arg)" },
-  { "cmd": "!run +citest 21",                           "expect": "^42$",     "desc": "+ macro uses arg" },
+  { "cmd": "!+citest 21",                               "expect": "^42$",     "desc": "+ macro uses arg" },
 
   { "cmd": "!addmacro _ciprinter exit(21)",             "expect": "added macro", "desc": "add _ macro (prints)" },
-  { "cmd": "!run _ciprinter",                           "expect": "^21$",     "desc": "_ macro prints" },
+  { "cmd": "!_ciprinter",                               "expect": "^21$",     "desc": "_ macro prints" },
 
   { "cmd": "!addmacro *cichain +citest _ciprinter",     "expect": "added macro", "desc": "add * hypermacro" },
   { "cmd": "!*cichain",                                 "expect": "^42$",     "desc": "* chains _ output as + arg" },
+
+  { "cmd": "!findmacro citest",                         "expect": "\\+citest", "desc": "findmacro returns matching macro" },
 
   { "cmd": "!delmacro +citest",                         "expect": "removed",  "desc": "cleanup + macro" },
   { "cmd": "!delmacro _ciprinter",                      "expect": "removed",  "desc": "cleanup _ macro" },
   { "cmd": "!delmacro *cichain",                        "expect": "removed",  "desc": "cleanup * macro" },
 
-  { "cmd": "!cpu",                                      "expect": "memory",   "desc": "built-in feature" }
+  { "cmd": "!cpu",                                      "expect": "memory",   "desc": "built-in feature" },
+
+  { "cmd": "!c 5*5",                                   "expect": "^25$",     "desc": "pythonsimo calculator" },
+  { "cmd": "!r hello",                                  "expect": "^olleh$",  "desc": "pythonsimo string reverse" },
+
+  { "cmd": "!add ciexpl this is a ci expl",             "expect": "ciexpl",   "desc": "pythonsimo expl add" },
+  { "cmd": "!expl ciexpl",                              "expect": "ci expl",  "desc": "pythonsimo expl lookup" },
+  { "cmd": "!remove ciexpl 1",                          "expect": "Deleted",  "desc": "pythonsimo expl remove" }
 ]
