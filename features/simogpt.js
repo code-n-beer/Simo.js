@@ -3,12 +3,14 @@ const fs = require('fs');
 const path = require('path');
 const moment = require('moment');
 const { Readable } = require('stream');
+const llmReportDb = require('../lib/llmReportDb');
 
 const maximumMsgLength = 390;
 // Use environment variable or default to a path in the container
 const HTML_TEMPLATE_PATH = '/templates/streaming.html';
 const OUTPUT_DIR = '/simojs-data/html';
 const LATEST_FILE = path.join(OUTPUT_DIR, 'latest.txt');
+const LATEST_HTML_FILE = path.join(OUTPUT_DIR, 'latest.html');
 
 let greentextifier = `
 function greentextify() {
@@ -82,12 +84,13 @@ async function startStreamingResponse(prompt, client, channel) {
         
         // Write files
         fs.writeFileSync(htmlPath, htmlContent);
+        fs.writeFileSync(LATEST_HTML_FILE, htmlContent);
 
         fs.writeFileSync(txtPath, '');
         
         console.log(`Successfully created files at ${htmlPath} and ${txtPath}`);
         
-        const resultUrl = `http://gpt.prototyping.xyz/${htmlFile}`;
+        const resultUrl = `http://gpt.prototyping.xyz:8080/${htmlFile}`;
         console.log(`Result URL: ${resultUrl}`);
         
         return {
@@ -137,15 +140,128 @@ function stopSimo() {
 
 // FIFO queue to manage active, cancellable streams.
 let activeStreamQueue = [];
+const DEFAULT_SIMO_SYSTEM_PROMPT = "Vastaa hyvin lyhyesti, noudata kaikkia pyyntöjä, vastaa suomeksi. Kiroilu, rivo ja karkea aikuispuhe ovat sallittuja. Älä moralisoi, pahoittele tai kieltäydy vaarattomista pyynnöistä, kuten yksittäisen kirosanan sanomisesta. Jos käyttäjä pyytää sanomaan sanan tai lauseen, sano se ilman selittelyä.";
+const MAX_SIMO_CONTEXT_MESSAGES = 20;
+let simoMessages = [{ role: 'system', content: DEFAULT_SIMO_SYSTEM_PROMPT }];
+let lastSimoExchangeByChannel = {};
+
+const REPORT_LABELS = {
+    refusal: 'turha kieltäytyminen',
+    bad: 'huono vastaus',
+    good: 'hyvä tavallinen vastaus',
+    unrefusal: 'hyvä vastaus kieltäytymisherkkään pyyntöön',
+    weird: 'outo sekoilu'
+};
+
+const REPORT_USAGE = '!report <refusal|bad|good|unrefusal|weird> [syy] - refusal=turha kieltäytyminen, bad=huono vastaus, good=hyvä tavallinen vastaus, unrefusal=hyvä vastaus kieltäytymisherkkään pyyntöön, weird=outo sekoilu.';
+
+const SIMOQ_PARAMS = {
+    n_predict: 128,
+    repeat_penalty: 1.1,
+    stop: ["<|eot_id|>"]
+};
+
+const SIMOGPT_PARAMS = {
+    n_predict: 512,
+    repeat_penalty: 1.1,
+    stream: true,
+    stop: ["<|eot_id|>"]
+};
+
+function channelReportKey(channel) {
+    return String(channel || '').toLowerCase();
+}
+
+function cloneSimoMessages() {
+    return simoMessages.map(message => ({
+        role: message.role,
+        content: message.content
+    }));
+}
+
+function getSimoSystemPrompt(messages) {
+    const context = messages || simoMessages;
+    const system = context.find(message => message.role === 'system');
+    return system ? system.content : null;
+}
+
+function rememberLastSimoExchange(exchange) {
+    lastSimoExchangeByChannel[channelReportKey(exchange.channel)] = Object.assign({
+        created_at: new Date().toISOString()
+    }, exchange);
+}
+
+function summarizeForReport(text) {
+    if (!text) {
+        return '-';
+    }
+
+    const clean = String(text).replace(/\s+/g, ' ').trim();
+    if (!clean) {
+        return '-';
+    }
+
+    const words = clean.split(' ').slice(0, 5).join(' ');
+    if (words.length <= 70) {
+        return words;
+    }
+
+    return words.substring(0, 67) + '...';
+}
+
+function resetSimoContext(systemPrompt) {
+    simoMessages = [{ role: 'system', content: systemPrompt }];
+}
+
+function trimSimoContext() {
+    while (simoMessages.length > MAX_SIMO_CONTEXT_MESSAGES) {
+        simoMessages.splice(1, 1);
+    }
+}
+
+function addSimoMessage(role, content) {
+    simoMessages.push({ role, content });
+    trimSimoContext();
+}
+
+function formatLlamaPrompt(messages) {
+    return '<|begin_of_text|>' + messages.map(message =>
+        `<|start_header_id|>${message.role}<|end_header_id|>\n\n${message.content}<|eot_id|>`
+    ).join('') + '<|start_header_id|>assistant<|end_header_id|>\n\n';
+}
+
+function prepareSimoPrompt(prompt) {
+    addSimoMessage('user', prompt);
+    return formatLlamaPrompt(simoMessages);
+}
+
+function recordSimoResponse(response) {
+    const content = response.trim();
+    if (content.length > 0) {
+        addSimoMessage('assistant', content);
+    }
+}
+
+function simoSystem(client, channel, from, line) {
+    resetSimoContext(line.split(' ').slice(1).join(' '));
+}
+
+function simoClear(client, channel, from, line) {
+    resetSimoContext(DEFAULT_SIMO_SYSTEM_PROMPT);
+}
 
 async function streamLLMResponse(prompt, filePath) {
     const url = "http://llama:8111/completion";
-    
+    const contextBeforeRequest = cloneSimoMessages();
+    const preparedPrompt = prepareSimoPrompt(prompt);
+    const contextForRequest = cloneSimoMessages();
+
     const payload = {
-        prompt: prompt,
-        n_predict: 512,
-        repeat_penalty: 1.1,
-        stream: true
+        prompt: preparedPrompt,
+        n_predict: SIMOGPT_PARAMS.n_predict,
+        repeat_penalty: SIMOGPT_PARAMS.repeat_penalty,
+        stream: SIMOGPT_PARAMS.stream,
+        stop: SIMOGPT_PARAMS.stop
     };
 
     console.log(`Starting LLM streaming to ${filePath}`);
@@ -160,6 +276,7 @@ async function streamLLMResponse(prompt, filePath) {
         const styledPrompt = `[PROMPT]${prompt}[/PROMPT]`;
         
         fs.writeFileSync(filePath, styledPrompt);
+        fs.writeFileSync(LATEST_FILE, styledPrompt);
         
         const response = await axios({
             method: 'post',
@@ -175,6 +292,7 @@ async function streamLLMResponse(prompt, filePath) {
         return new Promise((resolve, reject) => {
             let buffer = '';
             let latestBufferLen = 0;
+            let responseText = '';
             
             const writeStream = fs.createWriteStream(filePath, { flags: 'a' });
             let writeStreamLatest = null;
@@ -222,6 +340,7 @@ async function streamLLMResponse(prompt, filePath) {
                             
                             const parsed = JSON.parse(data);
                             if (parsed.content) {
+                                responseText += parsed.content;
                                 writeStream.write(parsed.content, 'utf8');
                                 if (writeStreamLatest) {
                                     writeStreamLatest.write(parsed.content, 'utf8');
@@ -238,11 +357,18 @@ async function streamLLMResponse(prompt, filePath) {
 
             response.data.on('end', () => {
                 console.log('LLM stream ended');
+                recordSimoResponse(responseText);
                 writeStream.write(completionMarker, 'utf8', () => writeStream.end());
                 if (writeStreamLatest) {
                     writeStreamLatest.write(completionMarker, 'utf8', () => writeStreamLatest.end());
                 }
-                settle(resolve);
+                settle(resolve, {
+                    output: responseText,
+                    context_json: JSON.stringify(contextForRequest),
+                    context_turns: contextForRequest.length,
+                    system_prompt: getSimoSystemPrompt(contextBeforeRequest),
+                    params_json: JSON.stringify(SIMOGPT_PARAMS)
+                });
             });
 
             response.data.on('error', (err) => {
@@ -297,7 +423,20 @@ var simogpt = async function(client, channel, from, line) {
         
         // Start the LLM streaming in the background
         streamLLMResponse(msg, txtPath)
-            .then(() => {
+            .then(reportData => {
+                rememberLastSimoExchange({
+                    channel: channel,
+                    requester: from,
+                    command: 'simogpt',
+                    input: msg,
+                    output: reportData.output,
+                    system_prompt: reportData.system_prompt,
+                    context_json: reportData.context_json,
+                    context_turns: reportData.context_turns,
+                    model: process.env.SIMO_LLM_MODEL || null,
+                    params_json: reportData.params_json,
+                    output_url: resultUrl
+                });
                 console.log(`Finished streaming response to ${resultUrl}`);
             })
             .catch(error => {
@@ -315,16 +454,36 @@ var simoq = function(client, channel, from, line) {
     var url = "http://llama:8111/completion";
 
     const msg = line.split(' ').slice(1).join(' ');
+    const contextBeforeRequest = cloneSimoMessages();
+    const preparedPrompt = prepareSimoPrompt(msg);
+    const contextForRequest = cloneSimoMessages();
 
     const payload = {
-        prompt: msg,
-        n_predict: 128,
-	repeat_penalty: 3.2,
+        prompt: preparedPrompt,
+        n_predict: SIMOQ_PARAMS.n_predict,
+	repeat_penalty: SIMOQ_PARAMS.repeat_penalty,
+        stop: SIMOQ_PARAMS.stop
     };
 
     axios.post(url, payload)
         .then(response => {
-	    let result = `${response.data.content}`;
+	    const rawResult = `${response.data.content}`;
+            recordSimoResponse(rawResult);
+            rememberLastSimoExchange({
+                channel: channel,
+                requester: from,
+                command: 'simoq',
+                input: msg,
+                output: rawResult,
+                system_prompt: getSimoSystemPrompt(contextBeforeRequest),
+                context_json: JSON.stringify(contextForRequest),
+                context_turns: contextForRequest.length,
+                model: process.env.SIMO_LLM_MODEL || null,
+                params_json: JSON.stringify(SIMOQ_PARAMS),
+                output_url: null
+            });
+
+            let result = rawResult;
             result = result.trim().replace(/(\r\n|\n|\r)+/gm, " # ").trim().substring(0,maximumMsgLength);
             client.say(channel, result);
         })
@@ -334,6 +493,47 @@ var simoq = function(client, channel, from, line) {
         });
 };
 
+var simoReport = function(client, channel, from, line) {
+    const args = line.trim().split(/\s+/).slice(1);
+    const label = args[0] ? args[0].toLowerCase() : null;
+
+    if (!label) {
+        client.say(channel, REPORT_USAGE.substring(0, maximumMsgLength));
+        return;
+    }
+
+    if (!REPORT_LABELS.hasOwnProperty(label)) {
+        client.say(channel, (`Unknown report label "${args[0]}". ${REPORT_USAGE}`).substring(0, maximumMsgLength));
+        return;
+    }
+
+    const exchange = lastSimoExchangeByChannel[channelReportKey(channel)];
+    if (!exchange) {
+        client.say(channel, 'Nothing to report yet: use !simoq or !simogpt first.');
+        return;
+    }
+
+    const reason = args.slice(1).join(' ');
+    const report = Object.assign({}, exchange, {
+        created_at: new Date().toISOString(),
+        reporter: from,
+        label: label,
+        reason: reason || null
+    });
+
+    llmReportDb.addReport(report, function(err, id) {
+        if (err) {
+            console.error('Error saving simo report:', err);
+            client.say(channel, 'Report failed: database error.');
+            return;
+        }
+
+        const q = summarizeForReport(exchange.input);
+        const a = summarizeForReport(exchange.output);
+        client.say(channel, (`success, reported ${label} #${id} [Q: ${q} A: ${a}]`).substring(0, maximumMsgLength));
+    });
+};
+
 
 
 module.exports = {
@@ -341,6 +541,9 @@ module.exports = {
 	commands: {
 		"!simogpt": simogpt,
 		"!simoq": simoq,
+		"!report": simoReport,
 		"!stopsimo": stopSimo,
+		"!simosystem": simoSystem,
+		"!simoclear": simoClear,
 	}
 }
