@@ -325,6 +325,11 @@
             }
         }
 
+        function appendPromptAnswerGap(parentElement) {
+            parentElement.appendChild(document.createElement('br'));
+            parentElement.appendChild(document.createElement('br'));
+        }
+
         function appendCharacters(textSegment, parentElement, isBold, animate = true) {
             hideWaitingMessage(); 
 
@@ -443,6 +448,7 @@
                         
                         if (promptText.length > 0) {
                             appendCharacters(promptText, contentDiv, true, animateOutput); 
+                            appendPromptAnswerGap(contentDiv);
                             hasProcessedContentInThisIteration = true;
                         }
                         if (completionText.length > 0) {

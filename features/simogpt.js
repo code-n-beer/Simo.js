@@ -163,7 +163,7 @@ const SIMOQ_PARAMS = {
 };
 
 const SIMOGPT_PARAMS = {
-    n_predict: 512,
+    n_predict: 1536,
     repeat_penalty: 1.1,
     stream: true,
     stop: ["<|eot_id|>"]
