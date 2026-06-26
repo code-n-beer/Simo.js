@@ -146,15 +146,15 @@ let simoMessages = [{ role: 'system', content: DEFAULT_SIMO_SYSTEM_PROMPT }];
 let lastSimoExchangeByChannel = {};
 
 const REPORT_LABELS = {
-    refusal: 'turha kieltäytyminen',
-    bad: 'huono vastaus',
-    good: 'hyvä tavallinen vastaus',
-    unrefusal: 'hyvä vastaus kieltäytymisherkkään pyyntöön',
-    weird: 'outo sekoilu',
-    sössötys: 'sekava sössötys'
+    refusal: 'refusal',
+    bad: 'bad',
+    good: 'good',
+    unrefusal: 'vastasi kieltäytymisherkkään',
+    weird: 'weird',
+    sössötys: 'sössötys'
 };
 
-const REPORT_USAGE = '!report <refusal|bad|good|unrefusal|weird|sössötys> [syy] - refusal=turha kieltäytyminen, bad=huono vastaus, good=hyvä tavallinen vastaus, unrefusal=hyvä vastaus kieltäytymisherkkään pyyntöön, weird=outo, sössötys=sekava.';
+const REPORT_USAGE = '!report <refusal|bad|good|unrefusal|weird|sössötys> [syy] - unrefusal=vastasi kieltäytymisherkkään';
 
 const SIMOQ_PARAMS = {
     n_predict: 128,
