@@ -111,6 +111,14 @@ const printMacro = (client, channel, from, line) =>
 const listMacros = (client, channel, from, line) =>
     client.say(channel, Object.keys(macros).join(' '));
 
+const findMacro = (client, channel, from, line) => {
+    const terms = line.split(' ').slice(1);
+    const matches = Object.keys(macros).filter(name =>
+        terms.every(word => name.match(new RegExp(word, 'i')))
+    );
+    client.say(channel, matches.join(', '));
+};
+
 module.exports = {
     name: 'eval in a sandbox',
     commands: {
@@ -118,7 +126,8 @@ module.exports = {
         '!addmacro': newMacro,
         '!delmacro': delMacro,
         '!printmacro': printMacro,
-        '!listmacros': listMacros
+        '!listmacros': listMacros,
+        '!findmacro': findMacro
     },
     init: init
 }

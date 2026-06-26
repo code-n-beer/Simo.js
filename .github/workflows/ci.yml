@@ -30,7 +30,7 @@ jobs:
           mkdir -p pythonsimo-data && touch pythonsimo-data/placeholder
 
       - name: Build images
-        run: docker compose build ircdjs sandbox simojs
+        run: docker compose build ircdjs sandbox simojs pythonsimo
 
   integration-tests:
     name: IRC integration tests
@@ -60,7 +60,7 @@ jobs:
           mkdir -p pythonsimo-data && touch pythonsimo-data/placeholder
 
       - name: Start services
-        run: docker compose up --build -d ircdjs sandbox simojs
+        run: docker compose up --build -d ircdjs sandbox simojs pythonsimo
 
       - name: Wait for bot to connect
         run: |
@@ -75,7 +75,7 @@ jobs:
 
       - name: Show service logs on failure
         if: failure()
-        run: docker compose logs simojs sandbox ircdjs
+        run: docker compose logs simojs sandbox ircdjs pythonsimo
 
       - name: Stop services
         if: always()
