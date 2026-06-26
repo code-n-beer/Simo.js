@@ -150,10 +150,11 @@ const REPORT_LABELS = {
     bad: 'huono vastaus',
     good: 'hyvä tavallinen vastaus',
     unrefusal: 'hyvä vastaus kieltäytymisherkkään pyyntöön',
-    weird: 'outo sekoilu'
+    weird: 'outo sekoilu',
+    sössötys: 'sekava sössötys'
 };
 
-const REPORT_USAGE = '!report <refusal|bad|good|unrefusal|weird> [syy] - refusal=turha kieltäytyminen, bad=huono vastaus, good=hyvä tavallinen vastaus, unrefusal=hyvä vastaus kieltäytymisherkkään pyyntöön, weird=outo sekoilu.';
+const REPORT_USAGE = '!report <refusal|bad|good|unrefusal|weird|sössötys> [syy] - refusal=turha kieltäytyminen, bad=huono vastaus, good=hyvä tavallinen vastaus, unrefusal=hyvä vastaus kieltäytymisherkkään pyyntöön, weird=outo, sössötys=sekava.';
 
 const SIMOQ_PARAMS = {
     n_predict: 128,
