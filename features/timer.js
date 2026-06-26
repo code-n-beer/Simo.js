@@ -3,8 +3,16 @@ const _ = require('underscore'),
     TimerDB = require('../lib/timerdb').TimerDB;
 
 var timerdb = new TimerDB(),
-    date_strs = ['HH:mm', 'DD.MM', 'DD.MM HH:mm', 'DD.MM.YYYY', 'DD.MM.YYYY HH:mm'],
-    help_str = "Supported formats: [number]s/m/h, " + date_strs.join(", ");
+    date_strs = [
+        'HH:mm',
+        'D.M', 'DD.MM',
+        'D.M HH:mm', 'DD.MM HH:mm',
+        'HH:mm D.M', 'HH:mm DD.MM',
+        'D.M.YYYY', 'DD.MM.YYYY',
+        'D.M.YYYY HH:mm', 'DD.MM.YYYY HH:mm',
+        'HH:mm D.M.YYYY', 'HH:mm DD.MM.YYYY',
+    ],
+    help_str = "Supported formats: [number]s/m/h, HH:mm, DD.MM, DD.MM HH:mm, HH:mm DD.MM, DD.MM.YYYY, DD.MM.YYYY HH:mm, HH:mm DD.MM.YYYY";
 
 var timer = function(client, channel, from, line) {
     var say = function(msg) {
@@ -23,14 +31,16 @@ var timer = function(client, channel, from, line) {
     var moment_delay = moment().add(
         initial(first_arg),
         last(first_arg));
-    var moment_date = moment(_.rest(line_arr).join(" "), date_strs);
+    var date_two = line_arr.length >= 3 ? moment(first_arg + ' ' + line_arr[2], date_strs, true) : null;
+    var date_one = moment(first_arg, date_strs, true);
 
     if (first_arg.match(/^[0-9]{1,3}[a-zM]$/) &&
         moment_delay.isValid()) {
         date = moment_delay;
-    } else if (first_arg.match(/(:|\.)/) &&
-        moment_date.isValid()) {
-        date = moment_date;
+    } else if (date_two && date_two.isValid()) {
+        date = date_two;
+    } else if (date_one.isValid()) {
+        date = date_one;
     } else {
         say(help_str);
         return;

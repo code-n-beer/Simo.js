@@ -24,5 +24,12 @@
 
   { "cmd": "!add ciexpl this is a ci expl",             "expect": "ciexpl",   "desc": "pythonsimo expl add" },
   { "cmd": "!expl ciexpl",                              "expect": "ci expl",  "desc": "pythonsimo expl lookup" },
-  { "cmd": "!remove ciexpl 1",                          "expect": "Deleted",  "desc": "pythonsimo expl remove" }
+  { "cmd": "!remove ciexpl 1",                          "expect": "Deleted",  "desc": "pythonsimo expl remove" },
+
+  { "cmd": "!timer 5m ci reminder",                     "expect": "Timer set to:.*202", "desc": "timer: duration in minutes" },
+  { "cmd": "!timer 2h ci reminder",                     "expect": "Timer set to:.*202", "desc": "timer: duration in hours" },
+  { "cmd": "!timer 23:59 ci reminder",                  "expect": "23:59",             "desc": "timer: time-only with message" },
+  { "cmd": "!timer 14:45 1.1.2077 ci reminder",         "expect": "Jan 01 2077 14:45", "desc": "timer: time-first date format with message" },
+  { "cmd": "!timer 1.1.2077 14:45 ci reminder",         "expect": "Jan 01 2077 14:45", "desc": "timer: date-first format with message" },
+  { "cmd": "!timer garbage",                             "expect": "Supported formats", "desc": "timer: invalid input shows help" }
 ]
