@@ -1,4 +1,0 @@
-shortuuid
-flask
-transformers
-gunicorn
